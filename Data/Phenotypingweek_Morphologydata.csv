@@ -1,0 +1,301 @@
+Block,Plot,Position,Plant,Chemotype,highest_shoot_cm,number_shoots,no_shoots_with_flowerbuds,no_shoots_with_flowerbuds_Rsa,no_leaves,Date,Person
+1,1,1,14_010_A,Myrox,66,7,0,0,41,21.06.2021,Steffi
+1,1,2,18_022_A,Myrox,59,4,0,0,48,21.06.2021,Steffi
+1,1,3,22_016_A,Myrox,49,8,0,0,29,21.06.2021,Steffi
+1,1,4,07_156_A,Myrox,80,11,6,0,47,21.06.2021,Steffi
+1,1,5,26_005_A,Myrox,48,5,0,0,38,21.06.2021,Steffi
+1,2,1,16_015_B,Aacet,90,7,2,0,53,21.06.2021,Tanja
+1,2,2,18_022_B,Myrox,63,6,0,0,59,21.06.2021,Tanja
+1,2,3,29_039_B,Keto,73,6,3,3,103,21.06.2021,Tanja
+1,2,4,08_032_B,BThu,70,5,0,0,69,21.06.2021,Tanja
+1,2,5,09_014_B,ABThu,58,5,0,0,104,21.06.2021,Tanja
+1,3,1,14_005_A,BThu,91,4,9,0,128,21.06.2021,Tanja
+1,3,2,17_024_A,BThu,76,5,0,0,138,21.06.2021,Tanja
+1,3,3,23_028_A,BThu,64,5,8,0,132,21.06.2021,Tanja
+1,3,4,08_032_A,BThu,67,3,0,0,64,21.06.2021,Tanja
+1,3,5,30_015_A,BThu,101,6,6,0,181,21.06.2021,Tanja
+1,4,1,18_005_B,Keto,71,4,0,0,99,21.06.2021,Tanja
+1,4,2,17_024_B,BThu,61,3,0,0,89,21.06.2021,Tanja
+1,4,3,26_043_B,ABThu,59,4,0,0,55,21.06.2021,Tanja
+1,4,4,16_062_B,Aacet,45,3,0,0,33,21.06.2021,Tanja
+1,4,5,26_005_B,Myrox,44,7,0,0,103,21.06.2021,Tanja
+1,5,1,16_015_A,Aacet,77,8,1,0,83,21.06.2021,Tanja
+1,5,2,22_003_A,Aacet,43,4,0,0,45,21.06.2021,Tanja
+1,5,3,23_019_A,Aacet,59,3,0,0,63,21.06.2021,Tanja
+1,5,4,16_062_A,Aacet,43,5,0,0,41,21.06.2021,Tanja
+1,5,5,07_001_A,Aacet,47,7,0,0,99,21.06.2021,Tanja
+1,6,1,14_010_B,Myrox,75,5,0,0,73,21.06.2021,Tanja
+1,6,2,22_003_B,Aacet,75,2,0,0,76,21.06.2021,Tanja
+1,6,3,23_028_B,BThu,67,5,5,0,86,21.06.2021,Tanja
+1,6,4,29_007_B,ABThu,94,4,6,0,99,21.06.2021,Tanja
+1,6,5,06_033_B,Keto,71,5,2,1,103,21.06.2021,Tanja
+1,7,1,18_005_A,Keto,65,4,0,0,61,21.06.2021,Tanja
+1,7,2,26_013_A,Keto,47,4,0,0,70,21.06.2021,Tanja
+1,7,3,29_039_A,Keto,84,3,4,3,70,21.06.2021,Tanja
+1,7,4,30_016_A,Keto,70,5,0,0,75,21.06.2021,Tanja
+1,7,5,06_033_A,Keto,75,5,0,0,144,21.06.2021,Tanja
+1,8,1,14_005_B,BThu,96,7,8,1,162,21.06.2021,Tanja
+1,8,2,17_033_B,ABThu,88,8,0,0,105,21.06.2021,Tanja
+1,8,3,22_016_B,Myrox,78,4,1,0,155,21.06.2021,Tanja
+1,8,4,30_016_B,Keto,82,9,0,1,89,21.06.2021,Tanja
+1,8,5,07_001_B,Aacet,83.5,10,0,0,247,21.06.2021,Tanja
+1,9,1,09_041_A,ABThu,72.5,7,0,0,136,21.06.2021,Tanja
+1,9,2,17_033_A,ABThu,27,6,0,0,31,21.06.2021,Tanja
+1,9,3,26_043_A,ABThu,69,4,3,0,81,21.06.2021,Tanja
+1,9,4,29_007_A,ABThu,86,3,4,0,98,21.06.2021,Tanja
+1,9,5,09_014_A,ABThu,72,7,0,0,74,21.06.2021,Tanja
+1,10,1,09_041_B,ABThu,77,10,6,0,173,21.06.2021,Tanja
+1,10,2,26_013_B,Keto,55,4,0,0,61,21.06.2021,Tanja
+1,10,3,23_019_B,Aacet,80,6,0,0,135,21.06.2021,Tanja
+1,10,4,07_156_B,Myrox,72.5,5,7,7,94,21.06.2021,Tanja
+1,10,5,30_015_B,BThu,85,9,5,5,164,21.06.2021,Tanja
+2,1,1,23_038_A,BThu,44,2,0,0,65,21.06.2021,Steffi
+2,1,2,08_039_A,BThu,65,4,0,0,76,21.06.2021,Steffi
+2,1,3,30_020_A,BThu,43,5,0,0,28,21.06.2021,Steffi
+2,1,4,14_007_A,BThu,68,10,4,4,122,21.06.2021,Steffi
+2,1,5,17_043_A,BThu,39,3,0,0,64,21.06.2021,Steffi
+2,2,1,23_038_B,BThu,51,3,0,0,79,21.06.2021,Steffi
+2,2,2,26_026_B,Keto,52,7,0,0,68,21.06.2021,Steffi
+2,2,3,24_023_B,Myrox,51,12,0,0,97,21.06.2021,Steffi
+2,2,4,07_011_B,Aacet,64,5,0,0,89,21.06.2021,Steffi
+2,2,5,16_162_B,ABThu,77,7,8,8,70,21.06.2021,Steffi
+2,3,1,09_027_A,ABThu,56,5,1,1,106,21.06.2021,Steffi
+2,3,2,29_043_A,ABThu,82,4,1,1,31,21.06.2021,Steffi
+2,3,3,26_044_A,ABThu,34,3,0,0,23,21.06.2021,Steffi
+2,3,4,17_040_A,ABThu,61,7,0,0,72,21.06.2021,Steffi
+2,3,5,16_162_A,ABThu,87,5,5,6,57,21.06.2021,Steffi
+2,4,1,08_042_B,Keto,74,6,0,0,118,21.06.2021,Steffi
+2,4,2,29_043_B,ABThu,75,7,1,1,37,21.06.2021,Steffi
+2,4,3,23_035_B,Aacet,75,6,0,0,78,21.06.2021,Steffi
+2,4,4,14_007_B,BThu,74,9,1,1,92,21.06.2021,Steffi
+2,4,5,18_024_B,Myrox,61,3,0,0,53,21.06.2021,Steffi
+2,5,1,22_020_A,Myrox,65,4,0,0,54,21.06.2021,Steffi
+2,5,2,14_014_A,Myrox,53,8,0,0,80,21.06.2021,Steffi
+2,5,3,24_023_A,Myrox,49,3,0,0,56,21.06.2021,Steffi
+2,5,4,26_152_A,Myrox,45,4,0,0,76,21.06.2021,Steffi
+2,5,5,18_024_A,Myrox,43,3,0,0,59,21.06.2021,Steffi
+2,6,1,09_027_B,ABThu,58.5,8,7,7,222,21.06.2021,Tanja
+2,6,2,08_039_B,BThu,78,3,0,0,86,21.06.2021,Tanja
+2,6,3,18_006_B,Keto,79.5,5,0,0,104,22.06.2021,Tanja
+2,6,4,26_152_B,Myrox,82.5,5,0,0,90,22.06.2021,Tanja
+2,6,5,16_063_B,Aacet,33,4,0,0,51,22.06.2021,Tanja
+2,7,1,22_106_A,Aacet,82.5,5,0,0,103,22.06.2021,Tanja
+2,7,2,16_021_A,Aacet,83,5,5,5,108,22.06.2021,Tanja
+2,7,3,23_035_A,Aacet,73,6,0,0,90,22.06.2021,Tanja
+2,7,4,07_011_A,Aacet,69,6,0,0,121,22.06.2021,Tanja
+2,7,5,16_063_A,Aacet,54.5,3,0,0,23,22.06.2021,Tanja
+2,8,1,22_106_B,Aacet,62,4,0,0,36,22.06.2021,Tanja
+2,8,2,14_014_B,Myrox,59.5,6,0,0,63,22.06.2021,Tanja
+2,8,3,30_020_B,BThu,69,3,0,0,19,22.06.2021,Tanja
+2,8,4,17_040_B,ABThu,88.5,5,0,0,83,22.06.2021,Tanja
+2,8,5,06_049_B,Keto,65,4,0,0,47,22.06.2021,Tanja
+2,9,1,08_042_A,Keto,77.5,10,0,0,103,22.06.2021,Tanja
+2,9,2,26_026_A,Keto,65.5,4,0,0,43,22.06.2021,Tanja
+2,9,3,18_006_A,Keto,79,4,0,0,77,22.06.2021,Tanja
+2,9,4,30_033_A,Keto,84.5,7,0,0,89,22.06.2021,Tanja
+2,9,5,06_049_A,Keto,75,5,0,0,77,22.06.2021,Tanja
+2,10,1,22_020_B,Myrox,68,5,0,0,69,22.06.2021,Tanja
+2,10,2,16_021_B,Aacet,83,4,0,0,69,22.06.2021,Tanja
+2,10,3,26_044_B,ABThu,45,3,0,0,48,22.06.2021,Tanja
+2,10,4,30_033_B,Keto,76,3,0,0,87,22.06.2021,Tanja
+2,10,5,17_043_B,BThu,69,9,0,0,109,22.06.2021,Tanja
+3,1,1,22_012_A,Aacet,54,3,0,0,20,22.06.2021,Steffi
+3,1,2,23_042_A,Aacet,68,6,4,4,110,22.06.2021,Steffi
+3,1,3,16_040_A,Aacet,77,5,7,3,93,22.06.2021,Steffi
+3,1,4,07_012_A,Aacet,81,4,1,1,125,22.06.2021,Steffi
+3,1,5,22_024_A,Aacet,66,6,0,0,89,22.06.2021,Steffi
+3,2,1,29_009_B,Keto,100,5,12,7,189,22.06.2021,Steffi
+3,2,2,17_056_B,BThu,101,6,4,4,318,22.06.2021,Steffi
+3,2,3,26_153_B,Myrox,76,3,0,0,214,22.06.2021,Steffi
+3,2,4,09_028_B,ABThu,81,4,19,7,162,22.06.2021,Steffi
+3,2,5,22_024_B,Aacet,67.5,5,0,0,94,22.06.2021,Steffi
+3,3,1,29_009_A,Keto,81,8,7,2,92,22.06.2021,Steffi
+3,3,2,06_039_A,Keto,91,4,7,7,248,22.06.2021,Steffi
+3,3,3,08_037_A,Keto,79,6,8,2,134,22.06.2021,Steffi
+3,3,4,09_076_A,Keto,71,8,12,12,151,22.06.2021,Steffi
+3,3,5,18_047_A,Keto,56.5,6,0,0,137,22.06.2021,Steffi
+3,4,1,22_012_B,Aacet,43.5,3,0,0,28,22.06.2021,Tanja
+3,4,2,26_045_B,ABThu,69.5,6,0,0,98,22.06.2021,Tanja
+3,4,3,08_037_B,Keto,77,9,1,1,134,22.06.2021,Tanja
+3,4,4,14_032_B,Myrox,92,6,3,3,73,22.06.2021,Tanja
+3,4,5,23_040_B,BThu,71,5,0,0,90,22.06.2021,Tanja
+3,5,1,17_057_A,ABThu,63,10,0,0,95,22.06.2021,Tanja
+3,5,2,26_045_A,ABThu,68,5,0,0,84,22.06.2021,Tanja
+3,5,3,16_175_A,ABThu,78,4,10,10,83,22.06.2021,Tanja
+3,5,4,09_028_A,ABThu,66,6,7,7,99,22.06.2021,Tanja
+3,5,5,29_165_A,ABThu,72.5,4,5,3,81,22.06.2021,Tanja
+3,6,1,26_165_B,Myrox,69,6,0,0,98,22.06.2021,Tanja
+3,6,2,06_039_B,Keto,64,6,2,2,81,22.06.2021,Tanja
+3,6,3,16_040_B,Aacet,81.5,5,5,5,89,22.06.2021,Tanja
+3,6,4,30_034_B,BThu,41.5,2,4,2,35,22.06.2021,Tanja
+3,6,5,29_165_B,ABThu,61,5,7,2,81,22.06.2021,Tanja
+3,7,1,26_165_A,Myrox,68,1,0,0,103,22.06.2021,Steffi
+3,7,2,18_046_A,Myrox,49,7,0,0,89,22.06.2021,Steffi
+3,7,3,26_153_A,Myrox,61,5,0,0,104,22.06.2021,Steffi
+3,7,4,14_032_A,Myrox,95.5,5,0,0,62,22.06.2021,Steffi
+3,7,5,22_068_A,Myrox,103,2,3,3,214,22.06.2021,Steffi
+3,8,1,17_057_B,ABThu,39,2,0,0,22,22.06.2021,Steffi
+3,8,2,18_046_B,Myrox,66,7,0,0,80,22.06.2021,Steffi
+3,8,3,14_045_B,BThu,76.5,6,10,4,90,22.06.2021,Steffi
+3,8,4,07_012_B,Aacet,78,6,6,6,77,22.06.2021,Steffi
+3,8,5,18_047_B,Keto,38,7,0,0,70,22.06.2021,Steffi
+3,9,1,06_010_A,BThu,73,6,1,1,186,22.06.2021,Steffi
+3,9,2,17_056_A,BThu,56,7,1,1,141,22.06.2021,Steffi
+3,9,3,14_045_A,BThu,67,5,6,6,66,22.06.2021,Steffi
+3,9,4,30_034_A,BThu,47.5,2,3,2,24,22.06.2021,Steffi
+3,9,5,23_040_A,BThu,59,3,0,0,85,22.06.2021,Steffi
+3,10,1,06_010_B,BThu,76,8,0,0,173,22.06.2021,Steffi
+3,10,2,23_042_B,Aacet,80,6,6,3,77,22.06.2021,Steffi
+3,10,3,16_175_B,ABThu,106,14,13,14,126,22.06.2021,Steffi
+3,10,4,09_076_B,Keto,56,5,2,2,57,22.06.2021,Steffi
+3,10,5,22_068_B,Myrox,68.5,7,0,0,86,22.06.2021,Steffi
+4,1,1,08_017_A,Keto,94,5,0,0,89,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,1,2,29_023_A,Keto,85,5,3,3,59,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,1,3,30_011_A,Keto,91,3,3,2,44,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,1,4,06_026_A,Keto,94,4,4,4,109,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,1,5,09_064_A,Keto,95,4,0,0,114,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,2,1,08_017_B,Keto,74,5,0,0,52,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,2,2,30_021_B,BThu,81,2,0,0,58,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,2,3,26_173_B,ABThu,65,3,0,0,43,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,2,4,24_022_B,Myrox,59,4,0,0,56,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,2,5,07_016_B,Aacet,69,4,0,0,43,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,3,1,18_045_A,Myrox,63,5,1,1,118,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,3,2,22_022_A,Myrox,67,2,0,0,59,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,3,3,14_002_A,Myrox,76,3,0,0,97,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,3,4,24_022_A,Myrox,57,5,0,0,89,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,3,5,07_052_A,Myrox,71,3,4,2,73,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,4,1,17_066_B,BThu,46.6,4,0,0,31,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,4,2,09_044_B,ABThu,74.4,5,0,0,117,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,4,3,07_052_B,Myrox,72.2,6,0,0,55,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,4,4,16_043_B,Aacet,80.2,1,4,4,84,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,4,5,09_064_B,Keto,91.4,5,1,1,97,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,5,1,17_066_A,BThu,59.6,11,0,0,74,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,5,2,30_021_A,BThu,95.2,2,0,0,76,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,5,3,08_023_A,BThu,75,2,4,4,101,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,5,4,16_002_A,BThu,83.6,3,0,20,117,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,5,5,24_019_A,BThu,81.4,5,20,2,86,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,6,1,29_153_B,ABThu,97.6,4,5,1,54,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,6,2,22_019_B,Aacet,70.4,6,1,1,40,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,6,3,14_002_B,Myrox,70.4,5,0,0,77,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,6,4,06_026_B,Keto,78.2,7,0,0,72,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,6,5,24_019_B,BThu,69.6,5,8,8,56,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,7,1,29_153_A,ABThu,106.2,4,4,1,48,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,7,2,09_044_A,ABThu,70.8,4,2,2,84,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,7,3,26_173_A,ABThu,58.2,3,0,0,51,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,7,4,17_064_A,ABThu,46,6,0,0,60,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,7,5,26_172_A,ABThu,64.2,3,0,1,44,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,8,1,18_045_B,Myrox,50.4,4,1,1,61,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,8,2,29_023_B,Keto,75,5,0,0,82,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,8,3,08_023_B,BThu,87.8,6,0,0,124,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,8,4,17_064_B,ABThu,58.4,9,0,0,86,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,8,5,22_100_B,Aacet,70.4,6,0,0,51,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,9,1,23_037_A,Aacet,61.4,4,0,0,69,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,9,2,22_019_A,Aacet,71,3,0,0,49,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,9,3,07_016_A,Aacet,87.6,5,0,0,129,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,9,4,16_043_A,Aacet,85.4,6,0,1,113,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,9,5,22_100_A,Aacet,79.2,6,3,3,53,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,10,1,23_037_B,Aacet,67.8,6,0,0,52,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,10,2,22_022_B,Myrox,92.4,9,0,0,113,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,10,3,30_011_B,Keto,82.2,4,0,0,97,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,10,4,16_002_B,BThu,89,5,22,17,132,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+4,10,5,26_172_B,ABThu,75.2,3,4,1,51,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,1,1,26_193_A,ABThu,65.8,4,0,0,79,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,1,2,29_155_A,ABThu,78.4,5,5,1,84,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,1,3,17_071_A,ABThu,68.4,4,0,0,50,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,1,4,09_032_A,ABThu,73.8,7,0,0,119,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,1,5,29_157_A,ABThu,80.4,6,6,6,109,21.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,2,1,23_044_B,Aacet,81.8,3,1,1,40,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,2,2,29_155_B,ABThu,93.4,4,8,2,105,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,2,3,07_033_B,Myrox,98.6,5,6,6,168,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,2,4,24_025_B,BThu,66,3,0,0,67,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,2,5,09_066_B,Keto,81.4,3,0,0,131,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,3,1,23_044_A,Aacet,65.4,2,0,0,32,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,3,2,07_019_A,Aacet,95.2,3,8,8,112,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,3,3,22_028_A,Aacet,74.2,7,0,0,101,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,3,4,07_021_A,Aacet,92.4,9,0,0,164,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,3,5,16_044_A,Aacet,126.4,5,11,4,144,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,4,1,30_035_B,BThu,99.6,9,4,4,90,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,4,2,30_051_B,Keto,91.4,2,2,2,56,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,4,3,17_071_B,ABThu,59.2,6,0,0,60,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,4,4,18_060_B,Myrox,49.8,2,0,0,47,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,4,5,16_044_B,Aacet,99.6,1,8,3,94,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,5,1,26_006_A,Keto,79.8,4,2,2,85,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,5,2,30_051_A,Keto,114,3,10,3,158,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,5,3,06_041_A,Keto,60.8,4,0,0,62,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,5,4,08_036_A,Keto,67.2,7,0,0,95,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,5,5,09_066_A,Keto,83.2,12,0,0,170,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,6,1,26_006_B,Keto,87.2,2,5,5,97,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,6,2,07_019_B,Aacet,87.8,5,0,0,95,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,6,3,06_016_B,BThu,78.2,10,0,0,119,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,6,4,09_032_B,ABThu,68.5,6,0,0,72,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,6,5,24_026_B,Myrox,65.4,3,0,0,115,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,7,1,30_035_A,BThu,100.2,6,6,6,97,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,7,2,23_006_A,BThu,73.2,4,2,2,53,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,7,3,06_016_A,BThu,79.2,6,0,0,97,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,7,4,24_025_A,BThu,56.8,4,0,0,72,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,7,5,16_013_A,BThu,84.8,2,6,6,98,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,8,1,26_193_B,ABThu,60.6,5,0,0,53,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,8,2,24_011_B,Myrox,53.4,2,0,0,46,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,8,3,22_028_B,Aacet,64.2,1,0,0,77,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,8,4,08_036_B,Keto,64.8,7,0,0,71,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,8,5,16_013_B,BThu,83,4,0,0,63,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,9,1,18_003_A,Myrox,64.2,3,0,0,125,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,9,2,24_011_A,Myrox,44.4,1,0,0,62,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,9,3,07_033_A,Myrox,92.8,7,13,13,261,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,9,4,18_060_A,Myrox,71.2,5,0,0,185,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,9,5,24_026_A,Myrox,69.8,10,0,0,103,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,10,1,18_003_B,Myrox,59.8,3,0,0,109,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,10,2,23_006_B,BThu,79.6,6,2,2,116,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,10,3,06_041_B,Keto,67.2,11,0,0,80,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,10,4,07_021_B,Aacet,48.6,5,0,0,82,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+5,10,5,29_157_B,ABThu,81.6,2,0,0,65,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,1,1,09_035_B,ABThu,84.8,9,5,4,100,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,1,2,24_027_B,Myrox,54.4,3,0,0,41,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,1,3,08_040_B,Keto,47.2,1,0,0,36,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,1,4,06_013_B,BThu,82.2,3,0,0,76,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,1,5,23_046_B,Aacet,77.4,6,3,3,72,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,2,1,23_046_A,Aacet,74.2,4,2,2,77,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,2,2,07_022_A,Aacet,79.6,5,2,2,75,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,2,3,16_050_A,Aacet,59.2,7,0,0,39,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,2,4,07_038_A,Aacet,73.2,4,5,5,88,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,2,5,22_029_A,Aacet,55.8,5,0,0,58,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,3,1,07_022_B,Aacet,88.2,10,6,1,126,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,3,2,17_068_B,ABThu,82,7,0,0,82,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,3,3,23_027_B,BThu,77.6,4,0,0,63,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,3,4,24_007_B,Myrox,68.6,5,0,0,51,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,3,5,29_044_B,Keto,58.8,11,0,0,60,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,4,1,07_152_A,Myrox,64.2,3,2,2,69,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,4,2,24_027_A,Myrox,69.2,4,0,0,71,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,4,3,18_081_A,Myrox,37.8,3,0,0,21,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,4,4,24_007_A,Myrox,83.2,5,0,0,71,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,4,5,14_015_A,Myrox,75.8,8,0,0,71,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,5,1,07_152_B,Myrox,69.8,4,0,0,118,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,5,2,16_050_B,Aacet,83.4,2,21,2,54,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,5,3,29_160_B,ABThu,76,4,0,0,69,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,5,4,09_077_B,Keto,73.6,3,0,1,76,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,5,5,08_050_B,BThu,80.4,2,0,0,36,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,6,1,06_040_A,Keto,70.2,4,0,0,54,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,6,2,26_004_A,Keto,46.4,2,0,0,31,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,6,3,08_040_A,Keto,65.6,1,0,1,73,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,6,4,09_077_A,Keto,72.8,4,4,3,93,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,6,5,29_044_A,Keto,59,3,0,0,42,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,7,1,06_040_B,Keto,70.6,3,0,0,46,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,7,2,24_049_B,BThu,55.8,3,0,0,64,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,7,3,07_038_B,Aacet,57,2,0,0,51,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,7,4,16_167_B,ABThu,59.2,6,3,4,42,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,7,5,14_015_B,Myrox,68.2,3,0,0,58,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,8,1,16_022_A,BThu,82.8,6,0,0,74,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,8,2,24_049_A,BThu,57.2,5,0,0,53,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,8,3,23_027_A,BThu,79.8,3,0,0,78,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,8,4,06_013_A,BThu,69.2,2,0,0,70,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,8,5,08_050_A,BThu,58.8,2,0,0,15,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,9,1,16_022_B,BThu,64.2,4,0,0,106,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,9,2,26_004_B,Keto,56.4,5,0,0,55,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,9,3,18_081_B,Myrox,36.8,2,0,0,26,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,9,4,22_029_B,Aacet,61.6,5,0,0,43,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,9,5,17_156_B,ABThu,58.4,4,0,0,68,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,10,1,09_035_A,ABThu,86.2,5,4,5,128,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,10,2,17_068_A,ABThu,59.8,4,0,0,79,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,10,3,29_160_A,ABThu,69.4,6,0,0,67,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,10,4,16_167_A,ABThu,76.6,4,13,13,91,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
+6,10,5,17_156_A,ABThu,74.2,3,0,0,81,22.06.2021,"No. Leaves (Paul), Rest (Tobias)"
