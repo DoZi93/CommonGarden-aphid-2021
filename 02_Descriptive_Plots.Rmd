@@ -1,0 +1,584 @@
+---
+title: "Descriptive Plots Common Garden 2021 aphid counting"
+author: "Dominik Ziaja"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_collapsed: true
+    number_section: true
+    df_print: paged
+    theme: cerulean
+---
+
+# Preparation
+```{r}
+library(naniar)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(patchwork)
+```
+# Vectors used throughout the script
+
+```{r}
+colours_chemotype <-  c("#FFC466", "#77A8F5", "#F9623E", "#6ECFBD", "#B481FF")
+labels_chemotype <- c("Keto", "BThu", "ABThu", "Aacet", "Myrox")
+```
+
+
+# Reading in and checking Data
+
+```{r}
+df <- read.csv("Data/Counteddata_ComGar_2021_tidied.csv", header=T)
+```
+
+**Visualise NA values**
+
+```{r}
+vis_miss(df)
+```
+
+No NA values present in the dataframe.
+
+**Check in the summary if anything abnormal is there**
+
+```{r}
+summary(df)
+```
+
+# Data wrangling
+
+## Adding factor levels 
+
+**Set levels of the plot-type for plotting later on**
+```{r}
+df$Plottype <- factor(df$Plottype, levels = c("Homogenous", "Heterogenous"))
+```
+
+The defined factor levels follow the magnitude of average alpha-Diversity
+of the different chemotypes. From the lowest (Keto) to the highest (Myrox)
+
+```{r}
+df$Chemotype = factor(df$Chemotype, levels=c("Keto",
+                                             "BThu",
+                                             "ABThu",
+                                             "Aacet",
+                                             "Myrox"))
+```
+
+
+# Summarising sum and mean of dataframe
+First we need to summarize on the treatmentlevel (Chemotype, Plottype) per week
+
+```{r}
+df.sum <- df %>%
+  group_by(Chemotype, Plottype, Week) %>%
+  summarise(across(where(is.numeric), ~ sum(.x, na.rm = TRUE)))
+```
+
+
+```{r}
+df.mean <- df %>%
+  group_by(Chemotype, Plottype, Week) %>%
+  summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE)))
+```
+
+# Plotting the different descriptive plots
+
+## Presence of all aphid species together
+First setting up the dataframe containing only the info we need/want
+```{r}
+df.sum.presence <- df.sum %>%
+  select(c("Chemotype":"Motherplant",
+           "U_tanaceti_total_presence",
+           "M_fuscoviride_total_presence",
+           "M_tanacetaria_total_presence")) %>%
+  pivot_longer(.,
+               cols = U_tanaceti_total_presence:M_tanacetaria_total_presence,
+               names_to = "metric",
+               values_to = "count")
+
+df.sum.presence$metric <- factor(df.sum.presence$metric, 
+                                 levels = c("U_tanaceti_total_presence",
+                                            "M_tanacetaria_total_presence",
+                                            "M_fuscoviride_total_presence"))
+```
+
+Then plotting the actual plot faceted for Plot-type
+```{r}
+gg.presence.allspecies.sum <- ggplot(data=df.sum.presence, aes(x=Week, y=count, color=Chemotype,
+                                               shape=metric, linetype=metric)) +
+  geom_line(size=.8) +
+  geom_point(size=1.7) +
+  scale_colour_manual(values = colours_chemotype,
+                      labels = labels_chemotype) +
+  facet_grid(Chemotype ~ Plottype) +
+  theme_light(base_size=9) +
+  labs(color = "Chemotype", linetype="", shape="") +
+    scale_x_continuous("\n\nCalendar week 2021",
+                     limits=c(min(df.sum.presence$Week), max(df.sum.presence$Week)),
+                     breaks = seq(min(df.sum.presence$Week), max(df.sum.presence$Week), 2)) +
+  ylab("Abundance\n") +
+  scale_linetype_manual(values = c(1,2,3),
+                        labels = c("U. tanaceti",
+                                   "M. tanacetaria",
+                                   "M. fuscoviride")) +
+  scale_shape_manual(values = c(15, 16, 17),
+                     labels = c("U. tanaceti",
+                                "M. tanacetaria",
+                                "M. fuscoviride")) +
+    theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        text = element_text(size=9),
+        strip.text.y = element_blank(),
+        strip.text.x = element_text(
+          size = 9, color = "black"),
+        strip.background = element_rect(
+          color = "white", fill = "white"),
+        legend.text = element_text(size=10),
+        legend.title = element_text(size=11),
+        legend.key.height = unit(1, "cm"),
+        legend.key.width = unit(1.8,"cm")) +
+  annotate("rect", xmin = 18, xmax = 21,
+           ymin = 0, ymax = 30,
+           alpha = .3, fill = "grey") +
+  annotate("rect", xmin = 26, xmax = 30,
+           ymin = 0, ymax = 30,
+           alpha = .3, fill = "grey") +
+  annotate(geom = "text",
+           x = 19.5,
+           y = 0,
+           vjust = 3.6,
+           label = "May",
+           size = 3) +
+  annotate(geom = "text",
+           x = 23.5,
+           y = 0,
+           vjust = 3.6,
+           label = "Jun",
+           size = 3) +
+  annotate(geom = "text",
+           x = 28,
+           y = 0,
+           vjust = 3.6,
+           label = "Jul",
+           size = 3) +
+  annotate(geom = "text",
+           x = 32,
+           y = 0,
+           vjust = 3.6,
+           label = "Aug",
+           size = 3) +
+  coord_cartesian(xlim = c(18, 33), clip = "off")
+
+plot(gg.presence.allspecies.sum)
+
+ggsave(filename = "Plots/Figure_S2.pdf", 
+       plot = gg.presence.allspecies.sum,
+       dpi = 600,
+       device = "pdf",
+       width = 18,
+       height = 14,
+       units = "cm")
+
+ggsave(filename="Plots/Figure_S2.jpg",
+       plot = gg.presence.allspecies.sum,
+       dpi = 600,
+       width = 18,
+       height = 14,
+       units = "cm")
+
+```
+
+
+## Mean total count *U. tanaceti*
+
+First, set up the dataframe with the necessary metrics
+
+```{r}
+df.mean.UT <- df.mean %>%
+  select(c("Chemotype":"Motherplant",
+           "U_tanaceti_total")) %>%
+  pivot_longer(.,
+               cols = U_tanaceti_total,
+               names_to = "metric",
+               values_to = "count")
+
+```
+
+Then plot the plot before later merging it
+```{r fig.height=10, fig.width=10}
+gg.total.ut.mean <- ggplot(data=df.mean.UT, aes(x=Week, y=count, color=Chemotype,
+                                shape=Plottype, linetype = Plottype)) +
+  geom_line(size=0.8) +
+  geom_point(size=1.5) +
+  scale_colour_manual(values = colours_chemotype,
+                      labels = labels_chemotype) +
+  theme_light() +
+  labs(color = "Chemotype", linetype="", shape="") +
+    scale_x_continuous(limits=c(min(df.mean.UT$Week), max(df.mean.UT$Week)),
+                     breaks = seq(min(df.mean.UT$Week), max(df.mean.UT$Week), 2)) +
+  facet_wrap(~ Chemotype, nrow=5) +
+  scale_shape_manual(values = c(15, 16),
+                     name="Plot-type") +
+  scale_linetype_manual(values=c("solid", "dashed"),
+                        name="Plot-type") +
+  ylab("Abundance\n") +
+  xlab("") +
+    guides(color = guide_legend(order=1),
+         shape = guide_legend(order=2),
+         linetype = guide_legend(order=2)) +
+    theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        text = element_text(size=10),
+        strip.text = element_blank(),
+        legend.text = element_text(size=8),
+        legend.title = element_text(size=8),
+        axis.title.y = element_text(size = 11),
+        legend.key.height = unit(1, "cm"),
+        legend.key.width = unit(1,"cm")) +
+  geom_vline(xintercept = 25, color="red4",
+             alpha = 0.3) +
+  annotate("rect", xmin = 18, xmax = 21,
+           ymin = 0, ymax = 630,
+           alpha = .3, fill = "grey") +
+  annotate("rect", xmin = 26, xmax = 30,
+           ymin = 0, ymax = 630,
+           alpha = .3, fill = "grey") +
+  annotate(geom = "text",
+           x = 19.5,
+           y = 0,
+           vjust = 4,
+           label = "May",
+           size = 3) +
+  annotate(geom = "text",
+           x = 23.5,
+           y = 0,
+           vjust = 4,
+           label = "Jun",
+           size = 3) +
+  annotate(geom = "text",
+           x = 28,
+           y = 0,
+           vjust = 4,
+           label = "Jul",
+           size = 3) +
+  annotate(geom = "text",
+           x = 32,
+           y = 0,
+           vjust = 4,
+           label = "Aug",
+           size = 3) +
+  coord_cartesian(xlim = c(18, 33), clip = "off")
+
+
+show(gg.total.ut.mean)
+```
+
+## Mean total count *M. tanacetaria*
+
+First, set up the dataframe with the necessary metrics
+
+```{r}
+df.mean.MT <- df.mean %>%
+  select(c("Chemotype":"Motherplant",
+           "M_tanacetaria_total")) %>%
+  pivot_longer(.,
+               cols = M_tanacetaria_total,
+               names_to = "metric",
+               values_to = "count")
+
+```
+
+
+```{r fig.height=10, fig.width=10}
+
+gg.total.mt.mean <- ggplot(data=df.mean.MT, aes(x=Week, y=count, color=Chemotype,
+                                shape=Plottype, linetype = Plottype)) +
+  geom_line(size=0.8) +
+  geom_point(size=1.5) +
+  scale_colour_manual(values = colours_chemotype,
+                      labels = labels_chemotype) +
+  theme_light() +
+  labs(color = "Chemotype", linetype="", shape="") +
+    scale_x_continuous(
+                     limits=c(min(df.mean.MT$Week), max(df.mean.MT$Week)),
+                     breaks = seq(min(df.mean.MT$Week), max(df.mean.MT$Week), 2)) +
+  facet_wrap(~ Chemotype, nrow=5) +
+  scale_shape_manual(values = c(15, 16),
+                     name="Plot-type") +
+  scale_linetype_manual(values=c("solid", "dashed"),
+                        name="Plot-type") +
+  ylab("Abundance\n") +
+    theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        text = element_text(size=10),
+        strip.text = element_blank(),
+        axis.title.x = element_text(size = 11),
+        axis.title.y = element_text(size = 11)) +
+     xlab("\nCalendar week 2021") +
+     ylab("") +
+    guides(color = guide_legend(order=1),
+         shape = guide_legend(order=2),
+         linetype = guide_legend(order=2)) +
+  geom_vline(xintercept = 25, color="green4",
+             alpha=0.3) +
+  annotate("rect", xmin = 18, xmax = 21,
+           ymin = 0, ymax = 45,
+           alpha = .3, fill = "grey") +
+  annotate("rect", xmin = 26, xmax = 30,
+           ymin = 0, ymax = 45,
+           alpha = .3, fill = "grey") +
+  annotate(geom = "text",
+           x = 19.5,
+           y = 0,
+           vjust = 4,
+           label = "May",
+           size = 3) +
+  annotate(geom = "text",
+           x = 23.5,
+           y = 0,
+           vjust = 4,
+           label = "Jun",
+           size = 3) +
+  annotate(geom = "text",
+           x = 28,
+           y = 0,
+           vjust = 4,
+           label = "Jul",
+           size = 3) +
+  annotate(geom = "text",
+           x = 32,
+           y = 0,
+           vjust = 4,
+           label = "Aug",
+           size = 3) +
+  coord_cartesian(xlim = c(18, 33), clip = "off")
+
+show(gg.total.mt.mean)
+```
+
+## Mean total count *M. fuscoviride*
+
+First, set up the dataframe with the necessary metrics
+
+```{r}
+df.mean.MF <- df.mean %>%
+  select(c("Chemotype":"Motherplant",
+           "M_fuscoviride_total")) %>%
+  pivot_longer(.,
+               cols = M_fuscoviride_total,
+               names_to = "metric",
+               values_to = "count")
+
+```
+
+
+```{r fig.height=10, fig.width=10}
+
+gg.total.mf.mean <- ggplot(data=df.mean.MF, aes(x=Week, y=count, color=Chemotype,
+                                shape=Plottype, linetype = Plottype)) +
+  geom_line(size=0.8) +
+  geom_point(size=1.5) +
+  scale_colour_manual(values = colours_chemotype,
+                      labels = labels_chemotype) +
+  theme_light() +
+  labs(color = "Chemotype", linetype="", shape="") +
+    scale_x_continuous(#"\n\nCalendar week 2021",
+                     limits=c(min(df.mean.MF$Week), max(df.mean.MF$Week)),
+                     breaks = seq(min(df.mean.MF$Week), max(df.mean.MF$Week), 2)) +
+  facet_wrap(~ Chemotype, nrow=5) +
+  scale_shape_manual(values = c(15, 16),
+                     name="Plot-type") +
+  scale_linetype_manual(values=c("solid", "dashed"),
+                        name="Plot-type") +
+  ylim(0,65) +
+    theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        text = element_text(size=10),
+        strip.text = element_blank()) +
+    xlab("") +
+    ylab("") +
+    guides(color = guide_legend(order=1),
+         shape = guide_legend(order=2),
+         linetype = guide_legend(order=2)) +
+  geom_vline(xintercept = 25, color="hotpink4",
+             alpha=0.3) +
+  annotate("rect", xmin = 18, xmax = 21,
+           ymin = 0, ymax = 65,
+           alpha = .3, fill = "grey") +
+  annotate("rect", xmin = 26, xmax = 30,
+           ymin = 0, ymax = 65,
+           alpha = .3, fill = "grey") +
+  annotate(geom = "text",
+           x = 19.5,
+           y = 0,
+           vjust = 4,
+           label = "May",
+           size = 3) +
+  annotate(geom = "text",
+           x = 23.5,
+           y = 0,
+           vjust = 4,
+           label = "Jun",
+           size = 3) +
+  annotate(geom = "text",
+           x = 28,
+           y = 0,
+           vjust = 4,
+           label = "Jul",
+           size = 3) +
+  annotate(geom = "text",
+           x = 32,
+           y = 0,
+           vjust = 4,
+           label = "Aug",
+           size = 3) +
+  coord_cartesian(xlim = c(18, 33), clip = "off")
+  
+show(gg.total.mf.mean)
+
+```
+
+# Merging the total mean plots of all three species together
+
+```{r fig.width=7.08, fig.height=5.51}
+
+gg.total.ut.mean.merge <- gg.total.ut.mean + theme(legend.key.width = unit(1.4, "cm"),
+                                                   legend.key.size = unit(1.2, "cm"),
+                                                   text = element_text(size = 9),
+                                                   legend.title = element_text(size = 10),
+                                                   legend.text = element_text(size = 10))
+gg.total.mt.mean.merge <- gg.total.mt.mean + theme(text = element_text(size = 9))
+gg.total.mf.mean.merge <- gg.total.mf.mean + theme(text = element_text(size = 9))
+
+gg.all.species.total.mean <-  gg.total.ut.mean.merge +
+  gg.total.mt.mean.merge + guides(colour = "none", linetype = "none", shape = "none") +
+  gg.total.mf.mean.merge + guides(colour = "none", linetype = "none", shape = "none") & theme(legend.position = "right")
+gg.all.species.total.mean <- gg.all.species.total.mean + plot_layout(guides = "collect") & theme(legend.text = element_text(size = 8))
+
+show(gg.all.species.total.mean)
+
+ggsave(filename = "Plots/Figure_1.pdf", 
+       plot = gg.all.species.total.mean,
+       dpi = 600,
+       device = "pdf",
+       width = 18,
+       height = 14,
+       units = "cm")
+
+ggsave(filename = "Plots/Figure_1.jpg", 
+       plot = gg.all.species.total.mean,
+       dpi = 600,
+       width = 18,
+       height = 14,
+       units = "cm")
+```
+
+# Analysis of cumulative sum of the different aphid species
+Calculating the percentage wise cumulative sum of the binary metrics
+```{r}
+df.cumsum <- df.sum %>%
+  group_by(Week) %>%
+  summarise(across(where(is.numeric), ~ sum(.x, na.rm = TRUE))) %>%
+ mutate(
+   UT_total = cumsum(U_tanaceti_total),
+   MT_total = cumsum(M_tanacetaria_total),
+   MF_total = cumsum(M_fuscoviride_total),
+   UT_alate_presence = cumsum(U_tanaceti_alate_presence),
+   MT_alate_presence = cumsum(M_tanacetaria_alate_presence),
+   MF_alate_presence = cumsum(M_fuscoviride_alate_presence),
+   UT_alate_count = cumsum(U_tanaceti_alate),
+   MT_alate_count = cumsum(M_tanacetaria_alate),
+   MF_alate_count = cumsum(M_fuscoviride_alate),
+   UT_total_presence = cumsum(U_tanaceti_total_presence),
+   MT_total_presence = cumsum(M_tanacetaria_total_presence),
+   MF_total_presence = cumsum(M_fuscoviride_total_presence)
+   ) %>%
+  mutate(
+    UT_total = UT_total/max(UT_total)*100,
+    MT_total = MT_total/max(MT_total)*100,
+    MF_total = MF_total/max(MF_total)*100,
+    UT_alate_presence = UT_alate_presence/max(UT_alate_presence)*100,
+    MT_alate_presence = MT_alate_presence/max(MT_alate_presence)*100,
+    MF_alate_presence = MF_alate_presence/max(MF_alate_presence)*100,
+    UT_alate_count = UT_alate_count/max(UT_alate_count)*100,
+    MT_alate_count = MT_alate_count/max(MT_alate_count)*100,
+    MF_alate_count = MF_alate_count/max(MF_alate_count)*100,
+    UT_total_presence = UT_total_presence/max(UT_total_presence)*100,
+    MT_total_presence = MT_total_presence/max(MT_total_presence)*100,
+    MF_total_presence = MF_total_presence/max(MF_total_presence)*100
+    ) %>%
+   select(c("Week","UT_total":"MF_total_presence")) %>%
+    pivot_longer(.,
+               cols = UT_total:MF_total_presence,
+               names_to = "metric",
+               values_to = "cumulative_sum")
+```
+
+## Cumulative sum *U. tanaceti*
+```{r}
+
+df.cumsum.UT <- df.cumsum %>%
+  filter(grepl("UT", metric)) # subset for only values of UT
+
+gg.cumsum.UT <- ggplot(df.cumsum.UT) +
+  geom_line(aes(x=Week, y=cumulative_sum, color=metric)) +
+  geom_point(aes(x=Week, y=cumulative_sum, shape=metric), size=2) +
+    scale_x_continuous("\nCalendar week 2021",
+                     limits=c(min(df.cumsum$Week), max(df.cumsum$Week)),
+                     breaks = seq(min(df.cumsum$Week), max(df.cumsum$Week), 1)) +
+  scale_color_manual(values=c("black", "black", "black", "black", "black")) +
+  ylab("\nCumulative sum [%]") +
+  guides(color="none") +
+  theme_classic()
+
+show(gg.cumsum.UT)
+```
+
+## Cumulative sum *M. tanacetaria* 
+
+```{r}
+
+df.cumsum.MT <- df.cumsum %>%
+  filter(grepl("MT", metric)) # subset for only values of MT
+
+gg.cumsum.MT <- ggplot(df.cumsum.MT) +
+  geom_line(aes(x=Week, y=cumulative_sum, color=metric)) +
+  geom_point(aes(x=Week, y=cumulative_sum, shape=metric), size=2) +
+    scale_x_continuous("\nCalendar week 2021",
+                     limits=c(min(df.cumsum$Week), max(df.cumsum$Week)),
+                     breaks = seq(min(df.cumsum$Week), max(df.cumsum$Week), 1)) +
+  scale_color_manual(values=c("black", "black", "black", "black", "black", "black")) +
+  ylab("\nCumulative sum [%]") +
+  guides(color="none") +
+  theme_classic()
+
+show(gg.cumsum.MT)
+```
+
+## cumulative sum *M. fuscoviride*
+
+```{r}
+
+df.cumsum.MF <- df.cumsum %>%
+  filter(grepl("MF", metric)) # subset for only values of MF
+
+gg.cumsum.MF <- ggplot(df.cumsum.MF) +
+  geom_line(aes(x=Week, y=cumulative_sum, color=metric)) +
+  geom_point(aes(x=Week, y=cumulative_sum, shape=metric), size=2) +
+    scale_x_continuous("\nCalendar week 2021",
+                     limits=c(min(df.cumsum$Week), max(df.cumsum$Week)),
+                     breaks = seq(min(df.cumsum$Week), max(df.cumsum$Week), 1)) +
+  scale_color_manual(values=c("black", "black", "black", "black", "black")) +
+  ylab("\nCumulative sum [%]") +
+  guides(color="none") +
+  theme_classic()
+
+show(gg.cumsum.MF)
+```

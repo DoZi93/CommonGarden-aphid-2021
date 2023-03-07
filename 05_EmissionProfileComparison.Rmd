@@ -1,0 +1,414 @@
+---
+title: "Script calculating differences in terpenoid profiles between plot-types"
+author: "Dominik Ziaja"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_collapsed: true
+    number_section: true
+    df_print: paged
+    theme: cerulean
+---
+
+
+```{r}
+# Reading in packages that are necessary
+library(plyr, include.only = "rbind.fill")
+library(dplyr)
+library(stringr) # manipulation of strings
+library(tidyr)
+library(ggplot2)
+library(rstatix, include.only = "wilcox_test")
+library(rstatix, include.only = "adjust_pvalue")
+library(plotrix, include.only = "std.error")
+library(plotrix, include.only = "add_significance")
+```
+
+# read in all the necessary data
+```{r}
+df.terpenes <- as_tibble(read.csv("Data/Phenotypingweek_terpenedata_tidied.csv"))
+```
+
+```{r}
+df.terpenes <- df.terpenes %>%
+  filter(!(Block == 1 & Plot == 1))
+```
+
+
+```{r}
+df.terpenes.tidy <- df.terpenes %>%
+  select(-c("Comp_ID", "Norm_weight", "Peak_area")) %>%
+  pivot_wider(names_from = Comp_name, values_from = Percent)
+```
+
+# Calculate differences in emission profile between plot types
+
+## set up a dataframe with renamed compounds for the plots
+
+```{r}
+df.terpenes.tidy.emission <- df.terpenes.tidy %>%
+    rename(
+         "cadinene_gamma" = "cadinene_g",
+         "thujone_alpha" = "thujone_a",
+         "thujone_beta" = "thujone_b",
+         "artemisyl_acetate_beta" = "artemisyl_acetate_b",
+         "caryophyllene_beta" = "caryophyllene_b",
+         "pinene_alpha" = "pinene_a",
+         "pinene_beta" = "pinene_b",
+         "terpinene_gamma" = "terpinene_g") %>%
+  rename_with(stringr::str_replace,
+              pattern = "unknown", replacement = "unknw",
+              matches("unknown")) %>%
+  rename_with(stringr::str_replace,
+              pattern = "sesquiterpenoid", replacement = "ST",
+              matches("sesquiterpenoid"))
+  
+```
+
+## set up a dataframe for plotting the barplots
+```{r}
+barplot.differences.emission.df <- df.terpenes.tidy.emission %>%
+  group_by(Chemotype, Plottype) %>%
+  summarise(mean = across(cadinene_gamma:yomogi_alcohol, ~ mean(.)), # calc mean and std. error per Chemotype x Plottype combination
+            stddev = across(cadinene_gamma:yomogi_alcohol, ~ std.error(.)),
+            .groups = "drop") %>%
+  unpack(c(mean, stddev), names_sep = "-") %>%
+  pivot_longer(cols = "mean-cadinene_gamma":"stddev-yomogi_alcohol", names_to = "metric", # pivot into longer format to separate later on
+              values_to = "percent") %>%
+  separate(metric, c("moment", "compound"), sep = "-") %>% # separate compound and mean/std. error
+  pivot_wider(names_from = moment, values_from = percent) %>% # pivot into wide format
+  mutate(errorbarmin = mean - stddev, # calculate the errorbarmin and errorbarmax
+         errorbarmax = mean + stddev,
+         Chemotype = factor(Chemotype, levels = c("Keto", # give levels to the chemotypes to set the order in which they are plotted
+                                                   "BThu",
+                                                   "ABThu",
+                                                   "Aacet",
+                                                   "Myrox")),
+         Plottype = factor(Plottype, levels = c("Homogenous", "Heterogenous"))) %>% # give levels to the plottype to set the order for plot
+  select(-stddev) # remove the std.error column since it is not needed anymore
+```
+
+
+
+## Kruskal-Wallis test to test for significant differences
+```{r}
+terpenes.kruskalwallis.tests <- df.terpenes.tidy.emission %>%
+  select(c("Plottype", "Chemotype", "cadinene_gamma":"yomogi_alcohol")) %>%
+  pivot_longer(cols = "cadinene_gamma":"yomogi_alcohol", names_to = "compound",
+               values_to = "Percent")
+```
+
+
+### Keto
+#### Test
+
+```{r}
+terpenes.kruskalwallis.tests.keto <- terpenes.kruskalwallis.tests %>%
+  filter(Chemotype == "Keto") %>%
+  group_by(compound) %>%
+  filter(!all(Percent == 0)) %>%
+  select(-Chemotype) %>%
+  group_by(compound) %>%
+  wilcox_test(Percent ~ Plottype) %>%
+  rstatix::adjust_pvalue(method = "holm") %>%
+  rstatix::add_significance()
+
+tibble(terpenes.kruskalwallis.tests.keto)
+  
+```
+
+
+#### Plot
+```{r}
+barplot.differences.emission.df.keto <- barplot.differences.emission.df %>%
+  filter(Chemotype == "Keto") %>%
+  pivot_wider(names_from = Plottype, values_from = c(mean, errorbarmin, errorbarmax)) %>%
+  filter(compound %in% terpenes.kruskalwallis.tests.keto$compound) %>% # filter out compounds that are 0
+  pivot_longer(cols = "mean_Heterogenous":"errorbarmax_Homogenous",
+               names_to = c("moment","Plottype"),
+               names_sep = "_",
+               values_to = "percent") %>%
+  pivot_wider(names_from = "moment",
+              values_from = "percent") %>%
+  mutate(Plottype = factor(Plottype, levels = c("Homogenous", "Heterogenous")))
+
+gg.barplot.differences.emission.keto <- ggplot(aes(x = compound, y = mean),
+                                               data = barplot.differences.emission.df.keto) +
+  geom_bar(stat = "identity", position = position_dodge(), color = "black",
+           aes(fill = Plottype)) +
+  geom_errorbar(aes(ymin = errorbarmin, ymax = errorbarmax, fill = Plottype), 
+                width = .2, position = position_dodge(.9)) +
+  theme_classic(base_size = 10) +
+  ylab("Relative amount [%]") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 8, vjust = +0.15),
+        axis.title.x = element_blank()) +
+  scale_fill_manual(name = "Plot-type",
+                    labels = c("Homogenous", "Heterogenous"),
+                    values = c("white", "grey40")) +
+  scale_y_continuous(limits = c(0,60), breaks = seq(0, 60, 10)) +
+  annotate("text", x = 26.2, y = 5, label = "**", angle = 90) +
+  annotate("text", x = 40.2, y = 2, label = "*", angle = 90)
+  
+  
+plot(gg.barplot.differences.emission.keto)
+
+ggsave("Plots/Figure_S3.jpg",
+       dpi = 500,
+       width = 18,
+       height = 14,
+       units = "cm")
+```
+
+## BThu
+### Test
+```{r}
+terpenes.kruskalwallis.tests.bthu <- terpenes.kruskalwallis.tests %>%
+  filter(Chemotype == "BThu") %>%
+  group_by(compound) %>%
+  filter(!all(Percent == 0)) %>%
+  select(-Chemotype) %>%
+  group_by(compound) %>%
+  wilcox_test(Percent ~ Plottype) %>%
+  rstatix::adjust_pvalue(method = "holm") %>%
+  rstatix::add_significance()
+
+tibble(terpenes.kruskalwallis.tests.bthu)
+```
+
+### Plot
+```{r}
+barplot.differences.emission.df.bthu <- barplot.differences.emission.df %>%
+  filter(Chemotype == "BThu") %>%
+  pivot_wider(names_from = Plottype, values_from = c(mean, errorbarmin, errorbarmax)) %>%
+  filter(compound %in% terpenes.kruskalwallis.tests.bthu$compound) %>% 
+  pivot_longer(cols = "mean_Heterogenous":"errorbarmax_Homogenous",
+               names_to = c("moment","Plottype"),
+               names_sep = "_",
+               values_to = "percent") %>%
+  pivot_wider(names_from = "moment",
+              values_from = "percent") %>%
+  mutate(Plottype = factor(Plottype, levels = c("Homogenous", "Heterogenous")))
+
+gg.barplot.differences.emission.bthu <- ggplot(aes(x = compound, y = mean),
+                                               data = barplot.differences.emission.df.bthu) +
+  geom_bar(stat = "identity", position = position_dodge(), color = "black",
+           aes(fill = Plottype)) +
+  geom_errorbar(aes(ymin = errorbarmin, ymax = errorbarmax, fill = Plottype), 
+                width = .2, position = position_dodge(.9)) +
+  theme_classic(base_size = 10) +
+  ylab("Relative amount [%]") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 8, vjust = +0.15),
+        axis.title.x = element_blank()) +
+  scale_fill_manual(name = "Plot-type",
+                    labels = c("Homogenous", "Heterogenous"),
+                    values = c("white", "grey40")) +
+  scale_y_continuous(limits = c(0,80), breaks = seq(0, 80, 10)) +
+  annotate("text", x = 10.1, y = 10, label = '**', angle = 90) +
+  annotate("text", x = 23.1, y = 5, label = "**", angle = 90) +
+  annotate("text", x = 24.1, y = 7, label = "*", angle = 90) +
+  annotate("text", x = 27.1, y = 7, label = "*", angle = 90)
+  
+plot(gg.barplot.differences.emission.bthu)
+
+ggsave("Plots/Figure_S4.jpg",
+       dpi = 500,
+       width = 18,
+       height = 14,
+       units = "cm")
+```
+
+
+## ABThu
+### Test
+
+```{r}
+terpenes.kruskalwallis.tests.abthu <- terpenes.kruskalwallis.tests %>%
+  filter(Chemotype == "ABThu") %>%
+  group_by(compound) %>%
+  filter(!all(Percent == 0)) %>%
+  select(-Chemotype) %>%
+  group_by(compound) %>%
+  wilcox_test(Percent ~ Plottype) %>%
+  rstatix::adjust_pvalue(method = "holm") %>%
+  rstatix::add_significance()
+
+tibble(terpenes.kruskalwallis.tests.abthu)
+```
+
+### Plot
+```{r}
+barplot.differences.emission.df.abthu <- barplot.differences.emission.df %>%
+  filter(Chemotype == "ABThu") %>%
+  pivot_wider(names_from = Plottype, values_from = c(mean, errorbarmin, errorbarmax)) %>%
+  filter(compound %in% terpenes.kruskalwallis.tests.abthu$compound) %>% 
+  pivot_longer(cols = "mean_Heterogenous":"errorbarmax_Homogenous",
+               names_to = c("moment","Plottype"),
+               names_sep = "_",
+               values_to = "percent") %>%
+  pivot_wider(names_from = "moment",
+              values_from = "percent") %>%
+  mutate(Plottype = factor(Plottype, levels = c("Homogenous", "Heterogenous")))
+
+
+gg.barplot.differences.emission.abthu <- ggplot(aes(x = compound, y = mean),
+                                               data = barplot.differences.emission.df.abthu) +
+  geom_bar(stat = "identity", position = position_dodge(), color = "black",
+           aes(fill = Plottype)) +
+  geom_errorbar(aes(ymin = errorbarmin, ymax = errorbarmax, fill = Plottype), 
+                width = .2, position = position_dodge(.9)) +
+  theme_classic(base_size = 10) +
+  ylab("Relative amount [%]") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 8, vjust = +0.15),
+        axis.title.x = element_blank()) +
+  scale_fill_manual(name = "Plot-type",
+                    labels = c("Homogenous", "Heterogenous"),
+                    values = c("white", "grey40")) +
+  scale_y_continuous(limits = c(0,60), breaks = seq(0, 60, 10)) +
+  annotate("text", x = 24.1, y = 4, label = '**', angle = 90)
+
+
+plot(gg.barplot.differences.emission.abthu)
+
+ggsave("Plots/Figure_S5.jpg",
+       dpi = 500,
+       width = 18,
+       height = 14,
+       units = "cm")
+```
+
+## Aacet
+
+### Test
+
+```{r}
+terpenes.kruskalwallis.tests.aacet <- terpenes.kruskalwallis.tests %>%
+  filter(Chemotype == "Aacet") %>%
+  group_by(compound) %>%
+  filter(!all(Percent == 0)) %>%
+  select(-Chemotype) %>%
+  group_by(compound) %>%
+  wilcox_test(Percent ~ Plottype) %>%
+  rstatix::adjust_pvalue(method = "holm") %>%
+  rstatix::add_significance()
+
+tibble(terpenes.kruskalwallis.tests.aacet)
+```
+
+
+### Plot
+```{r}
+barplot.differences.emission.df.aacet <- barplot.differences.emission.df %>%
+  filter(Chemotype == "Aacet") %>%
+  pivot_wider(names_from = Plottype, values_from = c(mean, errorbarmin, errorbarmax)) %>%
+  filter(compound %in% terpenes.kruskalwallis.tests.aacet$compound) %>% 
+  pivot_longer(cols = "mean_Heterogenous":"errorbarmax_Homogenous",
+               names_to = c("moment","Plottype"),
+               names_sep = "_",
+               values_to = "percent") %>%
+  pivot_wider(names_from = "moment",
+              values_from = "percent") %>%
+  mutate(Plottype = factor(Plottype, levels = c("Homogenous", "Heterogenous")))
+
+
+gg.barplot.differences.emission.aacet <- ggplot(aes(x = compound, y = mean),
+                                               data = barplot.differences.emission.df.aacet) +
+  geom_bar(stat = "identity", position = position_dodge(), color = "black",
+           aes(fill = Plottype)) +
+  geom_errorbar(aes(ymin = errorbarmin, ymax = errorbarmax, fill = Plottype), 
+                width = .2, position = position_dodge(.9)) +
+  theme_classic(base_size = 10) +
+  ylab("Relative amount [%]") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 8, vjust = +0.15),
+        axis.title.x = element_blank()) +
+  scale_fill_manual(name = "Plot-type",
+                    labels = c("Homogenous", "Heterogenous"),
+                    values = c("white", "grey40")) +
+  scale_y_continuous(limits = c(0,50), breaks = seq(0, 50, 10)) +
+  annotate("text", x = 5.2, y = 18, label = '*', angle = 90) +
+  annotate("text", x = 3.2, y = 20, label = '**', angle = 90) +
+  annotate("text", x = 10.2, y = 2, label = '*', angle = 90) +
+  annotate("text", x = 11.2, y = 5.5, label = '***', angle = 90) +
+  annotate("text", x = 12.2, y = 6, label = '***', angle = 90) +
+  annotate("text", x = 18.2, y = 5, label = '**', angle = 90) +
+  annotate("text", x = 20.2, y = 3, label = '*', angle = 90) +
+  annotate("text", x = 22.2, y = 4, label = '*', angle = 90) +
+  annotate("text", x = 24.2, y = 5, label = '***', angle = 90) +
+  annotate("text", x = 25.2, y = 3, label = '*', angle = 90) +
+  annotate("text", x = 27.2, y = 17, label = '**', angle = 90) +
+  annotate("text", x = 37.2, y = 3, label = '**', angle = 90) +
+  annotate("text", x = 33.2, y = 5, label = '**', angle = 90)
+
+
+plot(gg.barplot.differences.emission.aacet)
+
+ggsave("Plots/Figure_S6.jpg",
+       dpi = 500,
+       width = 18,
+       height = 14,
+       units = "cm")
+```
+
+## Myrox
+
+### Test
+
+```{r}
+terpenes.kruskalwallis.tests.myrox <- terpenes.kruskalwallis.tests %>%
+  filter(Chemotype == "Myrox") %>%
+  group_by(compound) %>%
+  filter(!all(Percent == 0)) %>%
+  select(-Chemotype) %>%
+  group_by(compound) %>%
+  wilcox_test(Percent ~ Plottype) %>%
+  rstatix::adjust_pvalue(method = "holm") %>%
+  rstatix::add_significance()
+
+tibble(terpenes.kruskalwallis.tests.myrox)
+```
+
+### Plot
+```{r}
+barplot.differences.emission.df.myrox <- barplot.differences.emission.df %>%
+  filter(Chemotype == "Myrox") %>%
+  pivot_wider(names_from = Plottype, values_from = c(mean, errorbarmin, errorbarmax)) %>%
+  filter(compound %in% terpenes.kruskalwallis.tests.myrox$compound) %>% 
+  pivot_longer(cols = "mean_Heterogenous":"errorbarmax_Homogenous",
+               names_to = c("moment","Plottype"),
+               names_sep = "_",
+               values_to = "percent") %>%
+  pivot_wider(names_from = "moment",
+              values_from = "percent") %>%
+  mutate(Plottype = factor(Plottype, levels = c("Homogenous", "Heterogenous")))
+
+
+gg.barplot.differences.emission.myrox <- ggplot(aes(x = compound, y = mean),
+                                               data = barplot.differences.emission.df.myrox) +
+  geom_bar(stat = "identity", position = position_dodge(), color = "black",
+           aes(fill = Plottype)) +
+  geom_errorbar(aes(ymin = errorbarmin, ymax = errorbarmax, fill = Plottype), 
+                width = .2, position = position_dodge(.9)) +
+  theme_classic(base_size = 10) +
+  ylab("Relative amount [%]") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 8, vjust = +0.15),
+        axis.title.x = element_blank()) +
+  scale_fill_manual(name = "Plot-type",
+                    labels = c("Homogenous", "Heterogenous"),
+                    values = c("white", "grey40")) +
+  scale_y_continuous(limits = c(0,40), breaks = seq(0, 40, 10)) +
+  annotate("text", x = 6.1, y = 18, label = '**', angle = 90) +
+  annotate("text", x = 2.2, y = 6, label = '**', angle = 90) +
+  annotate("text", x = 25.2, y = 5, label = '**', angle = 90) +
+  annotate("text", x = 39.2, y = 4, label = '*', angle = 90)
+
+
+plot(gg.barplot.differences.emission.myrox)
+
+ggsave("Plots/Figure_S7.jpg",
+       dpi = 500,
+       width = 18,
+       height = 14,
+       units = "cm")
+```
+
+

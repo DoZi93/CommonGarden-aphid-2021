@@ -1,0 +1,227 @@
+---
+title: "Lasso regression of terpenoids on Aphid abundance significantly affected by Shannon-diversity"
+author: "Dominik Ziaja"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    toc_collapsed: true
+    number_section: true
+    df_print: paged
+    theme: cerulean
+---
+
+Notebook to analyse the importance of certain terpenoids in the abundance of the different aphid specialist species
+
+```{r}
+library(glmnet)
+library(car) # qqPlot (distribution = "pois" used for distribution checking for LASSO Regression)
+library(tidyverse)
+library(fitdistrplus)
+```
+# Load in necessities
+
+## set seed
+
+```{r}
+set.seed(100)
+```
+
+
+
+## Functions used
+```{r}
+df.lasso.tidiying <- function(df, Kept.aphidcolumn){
+  data.lasso <- df %>%
+  dplyr::select(c(Kept.aphidcolumn, "cadinene_g":"santolina_triene"))
+  
+  return(data.lasso)}
+```
+
+## Packages
+
+```{r}
+df.aphid <- as_tibble(read.csv("Data/Counteddata_ComGar_2021_tidied.csv"))
+df.terpenes <- as_tibble(read.csv("Data/Phenotypingweek_terpenedata_tidied.csv"))
+df.morphology <- as_tibble(read.csv("Data/Phenotypingweek_Morphologydata.csv"))
+```
+
+# Data tidying and wrangling
+
+## aphid data
+
+```{r}
+df.aphid <- df.aphid %>%
+  filter(Week == 25) %>%
+    dplyr::select(c("Block":"Plottype",
+           contains(c("M_fuscoviride", "U_tanaceti", "M_tanacetaria",
+                      "Antnest_presence", "Ant_MF_presence", "Ant_total_presence")),
+           "Counted_by"),
+           -"Plant")
+```
+
+## terpene data
+
+```{r}
+df.terpenes <- df.terpenes %>%
+  filter(!(Block == 1 & Plot == 1)) %>%
+  dplyr::select(-c("Comp_ID", "Norm_weight", "Peak_area")) %>%
+  pivot_wider(names_from = Comp_name, values_from = Percent)
+```
+
+## morphology data
+
+```{r}
+df.morphology <- df.morphology %>%
+  filter(!(Block == 1 & Plot == 1))
+  
+```
+
+## Construct dataframe with metainfo
+
+```{r}
+metainformation <- df.morphology %>%
+  dplyr::select("Block":"Chemotype") %>%
+  inner_join(., df.aphid[,c("Plant_standardized", "Plot", "Position", "Plottype")], by=c("Plant" = "Plant_standardized")) %>%
+  dplyr::rename("Plot_unique" = "Plot.y",
+         "Position_unique" = "Position.y",
+         "Plot_redundant" = "Plot.x",
+         "Position_redundant" = "Position.x")
+
+# set up a dataframe containing all the metainformation for the different plots
+metainformation.plotlevel <- metainformation %>%
+  filter(duplicated(Plot_unique) == FALSE) %>%
+  dplyr::select(-c("Position_unique", "Position_redundant")) %>%
+  mutate(Chemotype = case_when(Plottype == "Mixed" ~ "Mixed",
+                               Plottype == "Mono" ~ Chemotype))
+  
+    
+```
+
+## Data check
+Check whether in all dataframes the plant IDs are equal
+This allows us to later on merge the data frames based on the sample_IDs 
+```{r}
+all(df.aphid$Plant_standardized %in% df.morphology$Plant) & all(df.terpenes$Plant %in% df.aphid$Plant_standardized)
+```
+
+## Construct merged aphid and terpenoid dataframe
+
+```{r}
+df.aphid.terpenes <- df.aphid %>%
+  inner_join(df.terpenes, by = c("Plant_standardized" = "Plant")) %>%
+  dplyr::select(c("Plot.x",
+           contains(c("alate_presence", "total")), 
+           "cadinene_g":"yomogi_alcohol"),
+         -(contains("Ant")),
+         "chrysanthenol",
+         "chrysanthenone",
+         "chrysanthenyl_acetate_E",
+         "chrysanthenyl_acetate_Z",
+         "santolina_triene") %>%
+  rename("Plot" = "Plot.x")
+
+df.aphid.terpenes.lasso <- df.aphid.terpenes %>%
+  dplyr::select(-("Plot"))
+```
+
+# Lasso-regression
+
+## *M. tanacetaria*
+
+### Distribution estimate
+
+```{r}
+pois.estimates.mtanacetariatotal <- fitdist(df.aphid.terpenes$M_tanacetaria_total, "pois")
+plot(pois.estimates.mtanacetariatotal)
+qqPlot(df.aphid.terpenes$M_tanacetaria_total, distribution = "pois", lambda = pois.estimates.mtanacetariatotal$estimate)
+```
+
+**Seems like especially the counts higher than ~110 deviate heavily from the poisson distribution**
+
+
+### Lasso calculation
+
+```{r}
+
+data.lasso <- df.lasso.tidiying(df.aphid.terpenes, "M_tanacetaria_total")
+
+y <- data.lasso %>%
+  filter(M_tanacetaria_total < 150) %>%
+  dplyr::select("M_tanacetaria_total") %>%
+  as.matrix()
+
+x <- data.lasso %>%
+  filter(M_tanacetaria_total < 150) %>%
+  dplyr::select("cadinene_g":"santolina_triene") %>%
+  as.matrix()
+
+
+#lambda.min <- average_lasso_crossvalidation(y, x, family = "poisson")
+
+lasso.fit <- cv.glmnet(y=y, x=x, 
+                       #lambda = lambda.min, 
+                       family = "poisson")
+
+lasso.fit.matrix <- as.matrix(coef(lasso.fit, s = "lambda.1se"))
+
+print(subset(lasso.fit.matrix, lasso.fit.matrix > 0))
+```
+
+**Only an intercept estimate is given -> No linear combination available**
+
+## *U. tanaceti*
+
+### Dataframe preparation
+
+**First the data on the plot level needs to be calculated**
+
+```{r}
+df.terpenes.plot <- df.aphid.terpenes %>%
+  dplyr::select(c("Plot", "cadinene_g":"santolina_triene")) %>%
+  group_by(Plot) %>%
+  summarise_all(mean)
+
+df.aphids.plot <- df.aphid.terpenes %>%
+  dplyr::select(c("Plot", "U_tanaceti_total")) %>%
+  group_by(Plot) %>%
+  summarise_all(sum)
+
+df.aphid.terpenes.plot <- df.aphids.plot %>%
+  inner_join(., df.terpenes.plot, by = c("Plot" = "Plot"))
+```
+
+
+### Distribution estimate
+
+```{r}
+pois.estimates.utanacetitotalplot <- fitdist(df.aphid.terpenes.plot$U_tanaceti_total, "pois")
+plot(pois.estimates.utanacetitotalplot)
+qqPlot(df.aphid.terpenes.plot$U_tanaceti_total, distribution = "pois", lambda = pois.estimates.utanacetitotalplot$estimate)
+```
+
+### Lasso calculation
+ 
+```{r}
+data.lasso.plot <- df.lasso.tidiying(df.aphid.terpenes.plot, "U_tanaceti_total")
+
+y <- data.lasso.plot %>%
+  dplyr::select("U_tanaceti_total") %>%
+  filter(U_tanaceti_total < 4000) %>%
+  as.matrix()
+
+x <- data.lasso.plot %>%
+  filter(U_tanaceti_total < 4000) %>%
+  dplyr::select("cadinene_g":"santolina_triene") %>%
+  as.matrix()
+
+
+lasso.fit <- cv.glmnet(y=y, x=x, 
+                       family = "poisson")
+
+lasso.fit.matrix <- as.matrix(coef(lasso.fit, s = "lambda.1se"))
+
+print(subset(lasso.fit.matrix, lasso.fit.matrix > 0))
+```
+
+**Only an intercept estimate is given -> No linear combination available**

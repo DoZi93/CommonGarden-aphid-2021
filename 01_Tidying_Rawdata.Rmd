@@ -1,0 +1,230 @@
+---
+title: "Notebook for tidying up the data file from the Common Garden counting season 2021"
+author: "Dominik Ziaja"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_collapsed: true
+    number_section: true
+    df_print: paged
+    theme: cerulean
+    
+---
+
+# Load in
+
+## Packages
+```{r}
+library(naniar)
+library(dplyr)
+library(tidyr)
+library(stringr)
+```
+## Data
+```{r}
+df <- read.csv("Data/Counteddata_ComGar_2021.csv",
+               sep = ",",
+              na = c("", "NA"),
+              header=T)
+```
+
+# Checking of dataframe
+
+**Get the summary to see whether something is odd**
+```{r}
+summary(df)
+```
+
+**Visualise NA values**
+
+```{r}
+vis_miss(df)
+```
+
+No na.values observed where no na values were expected. Since during the read in empty cells were marked as
+"NA", the NA values of the aphid columns are simply zeros which will later be transformed into it.
+Important is, that no NA values are in the Metainformation-columns, which there are not.
+
+**check whether there are wrong/cryptic names in the meta columns**
+```{r}
+for (i in names(df)){
+  cat(c("The unique values of: ", i, "are the following:"))
+  print(unique(df[[i]]))
+  cat("\n")
+  }
+
+```
+All unique values in the columns make sense. Quite a lot of NAs probably due to
+a lot of 0 values not typed in. Often the last line of a read in file
+also contains NA values
+
+# Data wrangling/tidying
+
+## Transform Plot and Position into unique coding
+It allows to directly observe partially crossed/nested data and also allows us
+to calculate the nestedness by the glmm without specifically using the
+syntax for it. Therefore minimizing the possible errors made during the
+calculations
+
+Instead of reusing Plot 1-10 6 times, they will be numbered 1-60,
+the same applies to the positions. Instead of 1-5 x 60, we will use the
+numbers 1-300 to really show that all positions are unique.
+
+**Set up the vectors to insert unique positions**
+
+```{r}
+# setting up the new positions
+vector <- seq(1,300,1)
+Positions <- c()
+
+for (i in 1:length(unique(df$Week))){
+  Positions <- c(Positions, vector)
+}
+```
+
+
+
+```{r}
+df.tidied <- df %>%
+  mutate_all(~replace(., is.na(.), 0)) %>% # set all na values to 0
+  mutate(Week = Week + 17) %>% # add 17 to the calendar weeks in order to fit the calendar week (start at 18 instead of 1)
+  mutate(Plot = case_when(Block == 1 ~ Plot, # make the plot have unique coding, right now it's redundant
+                          Block == 2 ~ Plot + 10,
+                          Block == 3 ~ Plot + 20,
+                          Block == 4 ~ Plot + 30,
+                          Block == 5 ~ Plot + 40,
+                          Block == 6 ~ Plot + 50,)) %>%
+  mutate(Position = Positions) %>% # Only works if dataframe is sorted after Block-Plot-Position. Very prone to errors
+  filter(Plot != 1) %>% # remove here already Plot 1 since one plant of a wrong chemotype was planted into this plot
+  mutate(Plottype = case_when(Plottype == 0 ~ "Homogenous",
+                              Plottype == 1 ~ "Heterogenous"))
+```
+
+
+**Put a column called "Plant_standardized" into the dataframe to match with other files late ron**
+
+```{r}
+df.tidied <- df.tidied %>%
+separate("Plant", # make multiple columns out of the Plant column
+           into = c("Motherplant_ID", "Plant_number", "Plottype_abbreviation"),
+           sep = "_",
+         remove = FALSE) %>%
+  mutate(Motherplant_ID = str_pad(Motherplant_ID, width = 2, side = "left", pad = "0"),  # pad Motherplant with zeros to width = 2
+         Plant_number = str_pad(Plant_number, width = 3, side = "left", pad = "0")) %>%  # pad the plant number with zeros to width = 3
+  unite(., Plant_standardized, c("Motherplant_ID", "Plant_number", "Plottype_abbreviation"), sep = "_") # unite again to one column
+```
+
+## Checking the data types of the different columns
+Sometimes R reads in integer values as characters instead of values
+```{r}
+for (i in 1:ncol(df.tidied)) {
+  print(paste("The charactertype of ", colnames(df.tidied)[i], "is: ", typeof(df.tidied[, i])))
+}
+```
+Only the columns "Ant_total" and "U_tanaceti_apterous" need to be changed to integer.
+Also, the column "Date" needs to be formatted as date.
+
+However, the coercion resulted in introduction of NA since some values are not
+1:1 convertable. Especially the count of ants close to a nest were defined as
+">50" on 4 occasions. Therefore, these will be in this case replaced to the
+value 50 which will from now on be defined as the maximum measurement.
+The same as the value 2000 of the apterous uroleucon count.
+
+## Set Ant values and reformat certain columns
+```{r}
+df.tidied <- df.tidied %>%
+  mutate(Ant_total = ifelse(Ant_total == ">50", 50, Ant_total),
+         U_tanaceti_apterous = as.integer(U_tanaceti_apterous),
+         Ant_total = as.integer(Ant_total),
+         Date = as.Date(Date, format = "%d.%m.%Y"))
+```
+
+## Adding factor levels to the chemotypes to define the order for ggplotting
+The defined factor levels follow the magnitude of average alpha-Diversity
+of the different chemotypes. From the lowest (Keto) to the highest (Myrox)
+
+```{r}
+
+df.tidied$Chemotype = factor(df.tidied$Chemotype, levels=c("Keto",
+                                             "BThu",
+                                             "ABThu",
+                                             "Aacet",
+                                             "Myrox"))
+
+```
+
+## Add a column containing the motherplant information
+```{r}
+df.tidied <- df.tidied %>%
+  mutate(Motherplant = as.character(stringr::str_split_fixed(Plant, "_", 2)[,1]))
+
+```
+
+
+All values were 0 before the checked dates. So no values need to be replaced.
+However, the colonisation events of Uroleucon_tanaceti need to be set to 0, if
+winged nymphs were observed. Because then, it is very unlikely that the plant was still colonised
+by winged aphids not emerged from the plant.
+
+## Adding columns for total counts of taxa
+
+```{r}
+df.tidied <- df.tidied %>%
+  mutate(M_fuscoviride_total = M_fuscoviride_alate + M_fuscoviride_apterous,
+         M_fuscoviride_total_presence = ifelse(M_fuscoviride_total > 0, 1, 0),
+         U_tanaceti_total = U_tanaceti_alate + U_tanaceti_apterous,
+         U_tanaceti_total_presence = ifelse(U_tanaceti_total > 0, 1, 0),
+         M_tanacetaria_total = M_tanacetaria_alate + M_tanacetaria_apterous,
+         M_tanacetaria_total_presence = ifelse(M_tanacetaria_total > 0, 1, 0),
+         Ant_total_presence = ifelse(Ant_total > 0, 1, 0),
+         Ant_MF_presence = ifelse(Ant_MF > 0, 1, 0),
+         Antnest_presence = ifelse(Antnest == 0, 0, 1))
+
+
+```
+
+
+## Setting all Uroleucon alate values to 0 when Uroleucon alate nymphs were present
+This is specifically done after the total value columns were calculated to 
+incorporate the count of alate into the statistical analysis regarding the
+total count.
+
+```{r}
+df.tidied <- df.tidied %>%
+  mutate(U_tanaceti_alate = ifelse(U_tanaceti_WN == 1, 0, U_tanaceti_alate))
+```
+
+
+## Adding columns calculating the alate presence
+Adding the alate presence specifically after the alate count was set to 0 if winged
+nymphs were observed. This was done since this metric is a proxy for the colonisation of plants
+by alate.
+
+```{r}
+df.tidied <- df.tidied %>%
+  mutate(
+    M_fuscoviride_alate_presence = ifelse(M_fuscoviride_alate > 0, 1, 0),
+    U_tanaceti_alate_presence = ifelse(U_tanaceti_alate > 0, 1, 0),
+    M_tanacetaria_alate_presence = ifelse(M_tanacetaria_alate > 0, 1, 0)
+  )
+```
+
+
+## Reordering all the columns into a correct order
+```{r}
+df.tidied <- df.tidied %>%
+  relocate("Motherplant", .after = "Plant_standardized") %>%
+  relocate(contains("M_fuscoviride"), .after = "Plottype") %>%
+  relocate(contains("M_tanacetaria"), .after = "M_fuscoviride_total_presence") %>%
+  relocate(contains("U_tanaceti"), .after = "M_tanacetaria_total_presence") %>%
+  relocate(contains("Ant"), .after = "U_tanaceti_total_presence") %>%
+  relocate(c("Plant", "Plant_standardized", "Motherplant"), .after = "Position") %>%
+  select(-c("Notes", "Ant_MF", "Antnest", "Ant_total", "U_tanaceti_WN"))
+```
+
+
+## Saving the dataframe into the directory
+```{r}
+write.csv(df.tidied, "Data/Counteddata_ComGar_2021_tidied.csv", row.names = F)
+```

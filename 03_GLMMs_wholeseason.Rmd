@@ -1,0 +1,521 @@
+---
+title: "Script calculating the GLMMs for the aphid data spanning the whole season 2021"
+author: "Dominik Ziaja"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_collapsed: true
+    number_section: true
+    df_print: paged
+    theme: cerulean
+---
+
+# Load in necessities
+
+## Packages used
+```{r}
+library("glmmTMB")
+library("ggplot2")
+library("dplyr")
+library("DHARMa")
+library("car")
+library("insight")
+library("emmeans")
+library("patchwork")
+## cosmetic
+theme_set(theme_bw()+
+theme(panel.spacing=grid::unit(0,"lines")))
+```
+
+## Setting up colors for the chemotypes used throughout the script
+
+```{r}
+colours_chemotype <-  c("#FFC466", "#77A8F5", "#F9623E", "#6ECFBD", "#B481FF")
+labels_chemotype <- c("Keto", "BThu", "ABThu", "Aacet", "Myrox")
+```
+
+
+## Reading in the data ## 
+```{r}
+data <- read.csv("Data/Counteddata_ComGar_2021_tidied.csv")
+```
+
+# Data wrangling
+
+## Set up a column with the Clone_ID
+Using clone ID as a random factor in order to account for their variance since
+otherwise differences based on Plottype might be caused false-positive
+```{r}
+data <- data %>%
+  mutate(Clone_ID = as.character(
+    paste(
+    stringr::str_split_fixed(data$Plant, "_", 3)[,1], # Motherplant ID
+    "_", # Underscore to combine
+    stringr::str_split_fixed(data$Plant, "_", 3)[,2], # F1-ID
+    sep="")))
+```
+
+A small check, whether what we wanted to do actually worked.
+Testing on 20 random plant labels in the dataset
+```{r}
+for (i in sample.int(length(unique(data$Plant)), 20)){
+  print(cat(paste("Plant_ID: ", data$Plant[i], " Clone_ID: ", data$Clone_ID[i]), "/n "))}
+```
+# *U. tanaceti*
+
+## Total count
+
+Filtering of weeks based on the cumulative plot for UT total count
+```{r}
+data.total.UT <- data %>%
+  filter(Week > 20,
+         Week < 29)
+```
+
+### The zero inflation model
+```{r}
+UT.total.glmm.zi.complex <- glmmTMB(U_tanaceti_total ~ Chemotype * Plottype + Week
+                    + (1|Motherplant) 
+                    + (1|Clone_ID) 
+                    + (1|Block) 
+                    + (1|Plot) 
+                    + (1|Counted_by) 
+                    + (1|Plant),
+                    family = "poisson",
+                    zi=~ Chemotype * Plottype + Week
+                    + (1|Motherplant) 
+                    + (1|Clone_ID) 
+                    + (1|Block) 
+                    + (1|Plot) 
+                    + (1|Counted_by) 
+                    + (1|Plant),
+                    data=data.total.UT)
+```
+
+
+### Diagnostics
+**Simulate and plot residuals**
+```{r}
+sim.UT.total.glmm.zi.complex <- simulateResiduals(fittedModel = UT.total.glmm.zi.complex, n=1000)
+plot(sim.UT.total.glmm.zi.complex, quantreg=T)
+```
+
+
+
+### Significances
+
+**Receive the variance components of the model**
+```{r}
+var.glmm.ut.zi.complex <- get_variance(UT.total.glmm.zi.complex)
+var.glmm.ut.zi.complex
+```
+
+**Chi-square test**
+```{r}
+anova.var.glmm.zi.complex <- Anova(UT.total.glmm.zi.complex, type="III",
+                                          test="Chisq")
+
+anova.var.glmm.zi.complex.zi <- glmmTMB:::Anova.III.glmmTMB(UT.total.glmm.zi.complex,
+                                                            component = "zi")
+
+print(anova.var.glmm.zi.complex, digits = 3)
+print(anova.var.glmm.zi.complex.zi, digits = 3)
+```
+
+**Get the emmeans estimates**
+
+```{r}
+UT.count.complex.emmeans <- as.data.frame(emmeans(UT.total.glmm.zi.complex, pairwise~Chemotype*Plottype, type="response")$emmeans)
+
+UT.count.complex.emmeans$Chemotype <- factor(UT.count.complex.emmeans$Chemotype,
+                                             levels = c("Keto",
+                                                        "BThu",
+                                                        "ABThu",
+                                                        "Aacet",
+                                                        "Myrox"))
+UT.count.complex.emmeans$Plottype <- factor(UT.count.complex.emmeans$Plottype,
+                                            levels = c("Homogenous", "Heterogenous"))
+
+UT.count.complex.emmeans <- UT.count.complex.emmeans %>%
+  mutate(errorbarmin = rate  - SE,
+         errorbarmax = rate + SE )
+```
+
+**Plot the emmeans estimates**
+
+```{r}
+barplot.lsmeans.ut.total <- ggplot(aes(x=Chemotype,
+                                       y=rate,
+                                       fill=Chemotype,
+                                       alpha=Plottype),
+                                   data= UT.count.complex.emmeans) +
+  geom_bar(stat="identity", position="dodge") +
+  geom_errorbar(aes(ymin = rate-SE,
+                    ymax=rate+SE),
+                width=.3,
+                position=position_dodge(.9)) +
+  ylim(0,6) +
+  scale_x_discrete("\nChemotype") +
+  scale_fill_manual(values = colours_chemotype, guide = "none") +
+  labs(alpha="Plot-type") +
+  scale_y_continuous(expression(paste("Total count  ", italic("U. tanaceti")))) +
+  guides(alpha = guide_legend(override.aes = list(fill="grey",
+                                                  alpha = c(1, 0.5),
+                                                  linetype = 0))) +
+  scale_alpha_discrete(range = c(1,0.4)) +
+  theme_classic() +
+  theme(text = element_text(size=14),
+        axis.title.y = element_text(vjust = +3))
+
+show(barplot.lsmeans.ut.total)
+
+```
+
+## Alate
+
+Filtering the dataset for certain weeks based on the cumulative plot
+```{r}
+df.alate.UT <- data %>%
+  dplyr::filter(Week > 21,
+         Week < 30)
+```
+
+
+### Binomial model
+
+```{r}
+glmm.UT.alate.presence <- glmmTMB(U_tanaceti_alate_presence ~ Chemotype*Plottype
+                                  + Week 
+                                  + (1|Block) 
+                                  + (1|Plot) 
+                                  + (1|Clone_ID) 
+                                  + (1|Motherplant) 
+                                  + (1|Counted_by) 
+                                  + (1|Plant),
+                    data=df.alate.UT,
+                    family="binomial")
+```
+
+
+### Diagnostics
+
+DHARMA residual plots
+```{r}
+sim.UT.alate.presence <- simulateResiduals(fittedModel = glmm.UT.alate.presence, n=1000)
+plot(sim.UT.alate.presence, quantreg=T)
+```
+
+### Significances
+
+**receive the variance of each factor of the model**
+```{r}
+var.glmm.binomial.alate.presence <- get_variance(glmm.UT.alate.presence, tolerance = 1e-11)
+
+print(var.glmm.binomial.alate.presence)
+
+```
+
+**Chi-square test**
+```{r}
+anova.glmm.binomial.alate.presence <- Anova(glmm.UT.alate.presence, type="III",
+                                          test="Chisq")
+
+print(anova.glmm.binomial.alate.presence, digits = 3)
+```
+
+
+# *Macrosiphoniella tanacetaria* #
+
+
+## Total count
+```{r}
+df.MT.total <- data %>%
+  filter(Week > 18,
+         Week < 27)
+```
+
+### The zero-inflation model
+```{r}
+MT.total.glmm.zi.complex <- glmmTMB(M_tanacetaria_total ~ Chemotype * Plottype + Week
+                    + (1|Block)
+                    + (1|Plot)
+                    + (1|Clone_ID)
+                    + (1|Counted_by)
+                    + (1|Plant),
+                    family = "poisson",
+                    zi=~Chemotype * Plottype + Week 
+                    + (1|Block) 
+                    + (1|Plot)  
+                    + (1|Clone_ID)
+                    + (1|Counted_by)
+                    + (1|Plant),
+                    data=df.MT.total)
+```
+
+### Diagnostics
+```{r}
+sim.MT.total <- simulateResiduals(fittedModel = MT.total.glmm.zi.complex, n=1000)
+plot(sim.MT.total, quantreg = TRUE)
+```
+
+
+### Significances
+
+**receive the variance of each factor of the model**
+```{r}
+var.glmm.MT.total <- get_variance(MT.total.glmm.zi.complex, component = "all")
+print(var.glmm.MT.total)
+```
+
+
+**Chi-square test**
+
+```{r}
+anova.glmm.MT.total <- glmmTMB:::Anova.III.glmmTMB(MT.total.glmm.zi.complex,
+                                                  component = "cond")
+anova.glmm.MT.total.zi <- glmmTMB:::Anova.III.glmmTMB(MT.total.glmm.zi.complex,
+                                                      component = "zi")
+print(anova.glmm.MT.total)
+print(anova.glmm.MT.total.zi)
+```
+
+**Emmean estimates of significant interaction in zi-component of model**
+
+```{r}
+MT.count.zi.emmeans <- as.data.frame(emmeans(MT.total.glmm.zi.complex, pairwise~Chemotype * Plottype, 
+                                          type = "response",
+                                          component = "zi")) %>%
+  dplyr::select(c("Chemotype", "Plottype", "response", "SE")) %>%
+  filter(!(Chemotype == "." & Plottype == ".")) %>%
+  mutate(Chemotype = factor(Chemotype, levels = c("Keto",
+                                                  "BThu",
+                                                  "ABThu",
+                                                  "Aacet",
+                                                  "Myrox")),
+         Plottype = factor(Plottype, levels = c("Homogenous",
+                                                "Heterogenous")),
+         errorbarmin = response - SE,
+         errorbarmax = response + SE)
+```
+
+**Plot the emmean estimates**
+
+```{r}
+gg.MT.count.lsmean <- ggplot(aes(x = Chemotype, 
+                                 y = response, 
+                                 fill = Chemotype,
+                                 alpha = Plottype),
+             data= MT.count.zi.emmeans) +
+  geom_bar(stat="identity", position="dodge") +
+  geom_errorbar(aes(ymin=response-SE, ymax=response+SE),
+                width=.3, position=position_dodge(.9)) +
+  ylim(0,6) +
+  scale_x_discrete("\nChemotype") +
+  scale_fill_manual(values = colours_chemotype, guide="none") +
+  scale_alpha_discrete(name = "Plot-type",
+                       range = c(1, 0.4)) +
+  scale_y_continuous(expression(paste("Probability total presence  ",italic("M. tanacetaria"))),
+                     limits = c(0, 1),
+                     breaks = seq(0, 1, by = 0.2) ) +
+  guides(alpha = guide_legend(override.aes = list(fill="grey", alpha = c(1, 0.5),
+                                                  linetype = 0))) +
+  theme_classic() +
+  theme(text = element_text(size=12),
+        axis.title.y = element_text(vjust = +3))
+
+show(gg.MT.count.lsmean)
+```
+
+## Alate
+```{r}
+df.MT.alate <- data %>%
+  filter(Week > 20,
+         Week < 27)
+```
+
+### Binomial model
+```{r}
+glmm.MT.alate.presence <- glmmTMB(M_tanacetaria_alate_presence ~ Chemotype*Plottype + Week 
+                                  + (1|Block) 
+                                  + (1|Plot) 
+                                  + (1|Clone_ID) 
+                                  + (1|Motherplant) 
+                                  + (1|Counted_by) 
+                                  + (1|Plant),
+                    data=df.MT.alate,
+                    family="binomial")
+```
+
+### Diagnostics
+```{r}
+sim.MT.alate <- simulateResiduals(fittedModel = glmm.MT.alate.presence, n=1000)
+plot(sim.MT.alate, quantreg = TRUE)
+```
+
+
+### Significances
+**Get the variance explained by each factor**
+```{r}
+var.glmm.MT.alate.presence <- get_variance(glmm.MT.alate.presence, component = "all")
+var.glmm.MT.alate.presence
+```
+
+
+**Chi-square test**
+```{r}
+anova.glmm.MT.alate.presence <- Anova(glmm.MT.alate.presence, type="III",test="Chisq")
+print(anova.glmm.MT.alate.presence, digits = 3)
+```
+# *M. fuscoviride* 
+
+## Total count
+```{r}
+data.MF.total <- data %>%
+  filter(Week > 21,
+         Week < 28)
+```
+
+### The zero-inflation model
+```{r}
+glmm.MF.zi.total <- glmmTMB(M_fuscoviride_total ~ Chemotype * Plottype + Week +
+                                      Ant_total_presence + Antnest_presence + Ant_MF_presence
+                    #+ (1|Block) # Variance explained too low, causes singularity problems
+                    + (1|Plot)
+                    + (1|Clone_ID)  
+                    #+ (1|Motherplant) # Variance explained too low, causes singularity problems
+                    + (1|Plant),
+                    family = "nbinom2",
+                    zi=~Chemotype * Plottype + Week +
+                      Ant_total_presence + Antnest_presence + Ant_MF_presence
+                    #+ (1|Block) # Variance explained too low, causes singularity problems
+                    + (1|Plot)
+                    + (1|Clone_ID) 
+                    #+ (1|Motherplant) # Variance explained too low, causes singularity problems
+                    + (1|Plant),
+                    data=data.MF.total)
+```
+
+### Diagnostics
+```{r}
+sim.glmm.MF.zi.total <- simulateResiduals(glmm.MF.zi.total, n = 1000)
+plot(sim.glmm.MF.zi.total, quantreg=T)
+```
+
+
+### Significances
+**receive the variance of each factor of the model**
+```{r}
+var.glmm.MF.zi.total <- get_variance(glmm.MF.zi.total)
+
+print(var.glmm.MF.zi.total)
+
+```
+
+**Chi-square test**
+```{r}
+anova.zi.glmm.MF.zi.total <- glmmTMB:::Anova.glmmTMB(glmm.MF.zi.total,
+                                                     type = "III",
+                                                     component = "zi",
+                                                     test.statistic = "Chisq")
+
+anova.cond.glmm.MF.zi.total <- glmmTMB:::Anova.glmmTMB(glmm.MF.zi.total,
+                                                       type = "III",
+                                                       component = "cond",
+                                                       test.statistic = "Chisq")
+
+print(anova.cond.glmm.MF.zi.total, digits = 3)
+print(anova.zi.glmm.MF.zi.total, digits = 3)
+```
+
+## Alate
+
+```{r}
+data.MF.alate <- data %>%
+  filter(Week > 19,
+         Week < 27)
+```
+
+### Binomial model
+```{r}
+glmm.MF.alate.presence <- glmmTMB(M_fuscoviride_alate_presence ~ Chemotype * Plottype + Week +
+                                    Ant_total_presence + Antnest_presence + Ant_MF_presence
+                                 + (1|Block) 
+                                 + (1|Plot) 
+                                 + (1|Clone_ID) 
+                                 + (1|Motherplant)
+                                 + (1|Counted_by) 
+                                 + (1|Plant),
+                    data=data.MF.alate, 
+                    family="binomial")
+```
+
+
+### Diagnostics
+
+```{r}
+sim.MF.alate.glmm <- simulateResiduals(glmm.MF.alate.presence, n = 1000)
+plot(sim.MF.alate.glmm, quantreg=T)
+```
+
+
+### Significances
+
+**receive the variance of each factor of the model**
+```{r}
+var.MF.alate.glmm <- get_variance(glmm.MF.alate.presence)
+var.MF.alate.glmm
+```
+
+**Chi-square test**
+```{r}
+anova.MF.alate.glmm <- Anova(glmm.MF.alate.presence, type="III", test="Chisq")
+print(anova.MF.alate.glmm, digits = 3)
+```
+
+# Combining both significant emmeans plots
+
+When knitting the document, it seems the patchwork code hands out an error. When
+run individually in RStudio however it works. Therefore, the code is included as code
+but without output to allow for knitting this document as html.
+If you want to see the output, please check Figure 2 in the plot-folder.
+Alternatively you can run the script by yourself individually by directly using the
+03_GLMMs_wholeseason.Rmd file
+
+```{r Combining both significant emmeans plots, eval=F, echo=T}
+barplot.lsmeans.ut.total.merge <- barplot.lsmeans.ut.total +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        text = element_text(size = 11),
+        legend.text = element_text(size = 8)) +
+  coord_cartesian(clip = "off") +
+    annotate(geom = "text", x = 0, y = 150,
+            label = "A", hjust = 3.4, vjust = -1.3, size = 4, fontface = "bold")
+
+gg.MT.count.lsmean.merge <- gg.MT.count.lsmean +
+  theme(text = element_text(size = 11),
+        legend.text = element_text(size = 8)) +
+  coord_cartesian(clip = "off") +
+  annotate(geom = "text", x = 0, y = 1,
+            label = "B", hjust = 3.4, vjust = -1.3, size = 4, fontface = "bold")
+
+LSmeans.combined.MT.UT <- barplot.lsmeans.ut.total.merge / gg.MT.count.lsmean.merge  +
+                                plot_layout(guides = "collect") & theme(legend.position = "top")
+
+show(LSmeans.combined.MT.UT)
+
+ggsave("Plots/Figure_2.pdf", LSmeans.combined.MT.UT,
+       dpi=600,
+       device = "pdf",
+       width = 8.5, 
+       height = 16.7,
+       units = "cm")
+
+ggsave("Plots/Figure_2.jpg", LSmeans.combined.MT.UT,
+       dpi=600,
+       width = 8.5, 
+       height = 16.7,
+       units = "cm")
+```
+

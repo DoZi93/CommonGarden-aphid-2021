@@ -1,0 +1,1179 @@
+---
+title: "Analysis of Aphid and phenotype data sampled in calendar week 25 of 2021"
+author: "Dominik Ziaja"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_collapsed: true
+    number_section: true
+    df_print: paged
+    theme: cerulean
+---
+
+
+# Load in necessities
+
+## Read in packages
+```{r}
+library(plyr, include.only = "rbind.fill")
+library(stringr) # manipulation of strings
+library(vegan, include.only = "diversity") # shannon diversity calculation
+library(glmmTMB) # GLMMs
+library(DHARMa) # GLMM checking plots
+library(car) # Statistical tests for GLMMs 
+library(insight) # get variacne of GLMMs
+library(tidyverse)
+#library(ggthemes)
+library(cowplot)
+library(ggtext)
+library(ggeffects)
+```
+
+
+## Set the chemotype colors and label vectors used later on
+```{r}
+colours_chemotype <-  c("#FFC466", "#77A8F5", "#F9623E", "#6ECFBD", "#B481FF")
+colours_chemotype_heterogenousinc <- c(colours_chemotype, "grey39")
+labels_chemotype <- c("Keto", "BThu", "ABThu", "Aacet", "Myrox")
+labels_chemotype_heterogenousinc <- c(labels_chemotype, "Heterogenous")
+```
+
+
+## Functions used within this scirpt
+```{r}
+# create a function to transform coefficient of glmnet and cvglmnet to data.frame
+coeff2dt <- function(fitobject, s, speciesname, metric, plotlevel) {
+  coeffs <- coef(fitobject, s="lambda.1se") 
+  coeffs.dt <- data.frame(name = coeffs@Dimnames[[1]][coeffs@i + 1], coefficient = coeffs@x)
+  coeffs.dt["species"] <- speciesname
+  coeffs.dt["metric"] <- metric
+  coeffs.dt["Plotlevel"] <- plotlevel
+
+  # reorder the variables in term of coefficients
+  return(coeffs.dt[order(coeffs.dt$coefficient, decreasing = T),])
+}
+
+
+pivotwide_tidy_terpenedata_plantlevel <- function(terpenedata, keep_percent = 1){
+  if(keep_percent == 1){
+    dataframe <- terpenedata %>%
+        select(-c("Comp_ID", "Norm_weight", "Peak_area", "ID_unique",
+            "Plottype", "Block", "Plot", "Position", "Motherplant", "Chemotype")) %>%
+  pivot_wider(names_from = Comp_name, values_from = Percent) %>%
+  column_to_rownames("Plant")
+  }
+  else {
+    dataframe <- terpenedata %>%
+    select(-c("Comp_ID", "Norm_weight", "Percent", "ID_unique",
+            "Plottype", "Block", "Plot", "Position", "Motherplant", "Chemotype")) %>%
+    pivot_wider(names_from = Comp_name, values_from = Peak_area) %>%
+    column_to_rownames("Plant")
+  }
+  return(dataframe)
+}
+
+
+pivotwide_tidy_terpenedata_plotlevel <- function(terpenedata, keep_percent = 1){
+  
+  if(keep_percent == 1){
+    dataframe <- terpenedata %>%
+        select(-c("Comp_ID", "Norm_weight", "Peak_area", "ID_unique",
+            "Plottype", "Position", "Motherplant", "Chemotype")) %>%
+  pivot_wider(names_from = Comp_name, values_from = Percent) %>%
+      mutate(uniqueplots = case_when(Block == 1 ~ Plot + 0,
+                                 Block == 2 ~ Plot + 10,
+                                 Block == 3 ~ Plot + 20,
+                                 Block == 4 ~ Plot + 30,
+                                 Block == 5 ~ Plot + 40,
+                                 Block == 6 ~ Plot + 50)) %>%
+      select(-c("Block","Plot")) %>%
+  column_to_rownames("Plant")
+  }
+  else {
+    dataframe <- terpenedata %>%
+    select(-c("Comp_ID", "Norm_weight", "Percent", "ID_unique",
+            "Plottype", "Position", "Motherplant", "Chemotype")) %>%
+    pivot_wider(names_from = Comp_name, values_from = Peak_area) %>%
+      mutate(uniqueplots = case_when(Block == 1 ~ Plot + 0,
+                                 Block == 2 ~ Plot + 10,
+                                 Block == 3 ~ Plot + 20,
+                                 Block == 4 ~ Plot + 30,
+                                 Block == 5 ~ Plot + 40,
+                                 Block == 6 ~ Plot + 50)) %>%
+      select(-c("Block","Plot")) %>%
+    column_to_rownames("Plant")
+  }
+  return(dataframe)
+}
+
+
+# not implemented yet for zero inflation models
+extract_glmm_info <- function(glmm, anova, variance){
+  
+glmm.call <- as.character(glmm[['call']][['formula']])[2:3] %>%
+  as.data.frame(.)
+
+
+anova.information <- anova %>%
+  mutate(Parameters = rownames(anova))
+
+random.variance.metrics <- rownames(as.data.frame(variance['var.intercept']))
+random.variance.percentage <- as.vector(variance[['var.intercept']])/sum(variance[['var.fixed']], 
+                                                                       variance[['var.residual']],
+                                                      variance[['var.distribution']],
+                                                      variance[['var.dispersion']],
+                                                      variance[['var.intercept']])
+
+
+
+variance.df <- as.data.frame(cbind(random.variance.metrics, random.variance.percentage*100))
+
+output <- rbind.fill(glmm.call, anova.information, variance.df)
+
+return(output)
+}
+```
+
+## read in all the necessary data
+```{r}
+df.morphology <- read_csv("Data/Phenotypingweek_Morphologydata.csv")
+df.aphid <- as_tibble(read.csv("Data/Counteddata_ComGar_2021_tidied.csv"))
+df.terpenes <- as_tibble(read.csv("Data/Phenotypingweek_terpenedata_tidied.csv"))
+```
+
+# Tidying and data wrangling
+
+## Dataframe tidying
+
+**Keep only Week 25 as this is the calendar week phenotyping took place**
+Also, keep only columns that are needed and set up a plant ID column that
+matches the plant ID format used in the other data (terpene and morphology data)
+```{r}
+df.aphid <- df.aphid %>%
+  filter(Week == 25) %>%
+    select(c("Block":"Plottype",
+           contains(c("M_fuscoviride", "U_tanaceti", "M_tanacetaria",
+                      "Antnest_presence", "Ant_MF_presence", "Ant_total_presence")),
+           "Counted_by"),
+           -"Plant")
+  
+```
+
+**Keep only the 291 plants reliable Chemotyping data was acquired from in all dataframes**
+
+```{r}
+df.terpenes <- df.terpenes %>%
+  filter(!(Block == 1 & Plot == 1))
+
+df.morphology <- df.morphology %>%
+  filter(!(Block == 1 & Plot == 1))
+  
+```
+
+**Construct dataframes containing only the metainformation for both, individual plant and plot-level**
+
+```{r}
+metainformation <- df.morphology %>%
+  select("Block":"Chemotype") %>%
+  inner_join(., df.aphid[,c("Plant_standardized", "Plot", "Position", "Plottype")],
+             by=c("Plant" = "Plant_standardized")) %>%
+  dplyr::rename("Plot_unique" = "Plot.y",
+         "Position_unique" = "Position.y",
+         "Plot_redundant" = "Plot.x",
+         "Position_redundant" = "Position.x")
+
+# set up a dataframe containing all the metainformation for the different plots
+metainformation.plotlevel <- metainformation %>%
+  filter(duplicated(Plot_unique) == FALSE) %>%
+  select(-c("Position_unique", "Position_redundant")) %>%
+  mutate(Chemotype = case_when(Plottype == "Heterogenous" ~ "Heterogenous",
+                               Plottype == "Homogenous" ~ Chemotype))
+  
+    
+```
+
+**Drop unnecessary columns in the terpen dataframe and restructure format**
+```{r}
+df.terpenes.tidy <- df.terpenes %>%
+  select(-c("Comp_ID", "Norm_weight", "Peak_area")) %>%
+  pivot_wider(names_from = Comp_name, values_from = Percent) %>%
+  filter(!(Block == 1 & Plot == 1))
+
+```
+
+
+## check whether all Plant IDs are in the same format
+This allows us to later on merge the data frames based on the sample_IDs 
+```{r}
+all(df.aphid$Plant_standardized %in% df.morphology$Plant) & all(df.terpenes.tidy$Plant %in% df.aphid$Plant_standardized)
+```
+
+## Calculate Shannon-diversity and aphid plot sum
+```{r}
+
+shannon.terpenes.plant.perc <- df.terpenes %>%
+  pivotwide_tidy_terpenedata_plantlevel(.) %>%
+  diversity() %>%
+  as.data.frame() %>%
+  setNames(., c("Shannon_Diversity_plant_perc"))
+
+shannon.terpenes.plot.perc <- df.terpenes %>%
+  pivotwide_tidy_terpenedata_plotlevel(.) %>%
+  group_by(uniqueplots) %>%
+  summarise_all(mean) %>%
+  column_to_rownames("uniqueplots") %>%
+  diversity() %>%
+  as.data.frame() %>%
+  setNames(., c("Shannon_Diversity_plot_perc"))
+
+df.aphid.plotsum <- df.aphid %>%
+  group_by(Plot) %>%
+  dplyr::summarise(across(c("M_fuscoviride_alate","M_fuscoviride_total":"Ant_total_presence"),
+                          ~sum(.))) %>%
+  rename("Plot_unique" = "Plot")
+
+```
+
+
+## Set up morphology parameter dataframes
+
+**Individual plant level**
+```{r}
+morphology.parameters <- df.morphology %>%
+  filter(Plant %in% df.terpenes$Plant) %>%
+  column_to_rownames("Plant") %>%
+  select("highest_shoot_cm":"no_shoots_with_flowerbuds", "no_leaves") %>%
+  mutate(across(where(is.numeric), ~log(.+1))) %>% # log transform all columns
+  mutate(Plant = rownames(.))
+```
+
+**Plot-level**
+```{r}
+morphology.parameters.plotlevel <- df.morphology %>%
+  left_join(., metainformation[,c("Plot_unique", "Plant")]) %>%
+  filter(Plant %in% df.terpenes$Plant) %>%
+  select("highest_shoot_cm":"no_shoots_with_flowerbuds", "no_leaves", "Plot_unique") %>%
+  group_by(Plot_unique) %>%
+  summarise(across(c("number_shoots","no_shoots_with_flowerbuds", "no_leaves"), ~log(sum(.)+1)),
+            highest_shoot_cm = log(mean(highest_shoot_cm)+1))
+```
+
+## Set up GLMM dataframes
+
+**Individual plant level**
+```{r}
+
+glmm.data.plantlevel <- shannon.terpenes.plant.perc %>%
+  mutate(Plant = rownames(.)) %>%
+  inner_join(., metainformation[,c("Plottype","Chemotype" ,"Block","Plot_unique", "Position_unique", "Plant")],
+             by=c("Plant" = "Plant")) %>%
+  inner_join(., df.aphid[,c("U_tanaceti_total", 
+                            "U_tanaceti_total_presence",
+                            "U_tanaceti_alate",
+                            "U_tanaceti_alate_presence",
+                            "M_tanacetaria_total",
+                            "M_tanacetaria_total_presence",
+                            "M_tanacetaria_alate",
+                            "M_tanacetaria_alate_presence",
+                            "M_fuscoviride_total",
+                            "M_fuscoviride_total_presence",
+                            "M_fuscoviride_alate",
+                            "M_fuscoviride_alate_presence",
+                            "Motherplant",
+                            "Antnest_presence",
+                            "Ant_MF_presence",
+                            "Ant_total_presence",
+                            "Plant_standardized"
+                            )], by=c("Plant"="Plant_standardized")) %>%
+  inner_join(., morphology.parameters) %>%
+  mutate(Antpresence = case_when(
+    Antnest_presence == 1 | Ant_MF_presence == 1 | Ant_total_presence == 1 ~ 1,
+    Antnest_presence == 0 & Ant_MF_presence == 0 & Ant_total_presence == 0 ~ 0))
+  
+
+```
+
+
+**Plot level**
+```{r}
+glmm.data.plotlevel <- shannon.terpenes.plot.perc %>%
+  mutate(Plot_unique = rownames(.)) %>%
+  mutate(Plot_unique = as.integer(Plot_unique)) %>%
+  inner_join(., metainformation.plotlevel[,c("Plottype", "Block", "Plot_unique",
+                                            "Chemotype")],
+             by=c("Plot_unique" = "Plot_unique")) %>%
+  full_join(., df.aphid.plotsum[,c("U_tanaceti_total",
+                                   "U_tanaceti_alate",
+                            "U_tanaceti_total_presence",
+                            "U_tanaceti_alate_presence",
+                            "M_tanacetaria_total",
+                            "M_tanacetaria_alate",
+                            "M_tanacetaria_total_presence",
+                            "M_tanacetaria_alate_presence",
+                            "M_fuscoviride_total",
+                            "M_fuscoviride_alate",
+                            "M_fuscoviride_total_presence",
+                            "M_fuscoviride_alate_presence",
+                            "Antnest_presence",
+                            "Ant_MF_presence",
+                            "Ant_total_presence",
+                            "Plot_unique")],
+            by=c("Plot_unique"="Plot_unique")) %>%
+  inner_join(., morphology.parameters.plotlevel, by=c("Plot_unique" = "Plot_unique")) %>%
+  mutate(across(contains(c("presence", "calculated")), 
+                ~case_when(. > 0 ~ 1,
+                           . == 0 ~ 0))) %>%
+  mutate(Antpresence = case_when(
+    Antnest_presence == 1 | Ant_MF_presence == 1 | Ant_total_presence == 1 ~ 1,
+    Antnest_presence == 0 & Ant_MF_presence == 0 & Ant_total_presence == 0 ~ 0))
+
+```
+
+### set factor levels for the different chemotypes
+
+```{r}
+glmm.data.plantlevel$Chemotype <- factor(glmm.data.plantlevel$Chemotype, 
+                                         levels = c("Keto","BThu", "ABThu", "Aacet", "Myrox"))
+glmm.data.plantlevel$Plottype <- factor(glmm.data.plantlevel$Plottype,
+                                        levels = c("Homogenous", "Heterogenous"))
+
+glmm.data.plotlevel$Chemotype <- factor(glmm.data.plotlevel$Chemotype,
+                                        levels=c("Keto", "BThu", "ABThu", "Aacet", "Myrox", "Heterogenous"))
+
+glmm.data.plotlevel$Plottype <- factor(glmm.data.plotlevel$Plottype,
+                                        levels = c("Homogenous", "Heterogenous"))
+```
+
+
+
+# Plot the mean composition values of terpenoids for each chemotype
+
+## Preparation of dataframe
+
+```{r fig.height = 6, fig.width=7}
+
+# the compounds we actually want to plot and show in the stacked barplot
+fill_values <- c("#FFC466",
+                 "#6ECFBD",
+                 "#489688",
+                 "#F9623E",
+                 "#77A8F5",
+                 "#B481FF",
+                 "orchid3",
+                 "tan",
+                 "red3",
+                 "gray40",
+                 "darkslategray3",
+                 "lightgoldenrod4",
+                 "khaki",
+                 "gray70",
+                 "gray20") # color for the all other terpenes, labeled as "remaining terpenes"
+
+fill_limits <- c("artemisia_ketone", # compounds we want to have plotted
+                 "artemisyl_acetate_b",
+                 "artemisia_alcohol",
+                 "thujone_a",
+                 "thujone_b",
+                 "myroxide_Z",
+                 "santolina_triene",
+                 "cadinene_g",
+                 "sabinene",
+                 "yomogi_alcohol",
+                 "unknown_sesquiterpenoid_9",
+                 "neothujol", # until here 80% cumulative sum of all chemotypes
+                 "cineole_1_8",
+                 "cymene_p")
+
+barplot.stacked.composition.data <- df.terpenes.tidy %>%
+  group_by(Chemotype) %>%
+  summarize(across(cadinene_g:yomogi_alcohol, ~mean(.))) %>% # calculate the mean
+  pivot_longer(names_to = "Compound", values_to = "Percentage", # change dataframe format
+               cols = cadinene_g:yomogi_alcohol) %>%
+  mutate(Compounds_barplot = if_else(Compound %in% fill_limits, # construct a column providing info whether compound is to be plotted
+                                            Compound, "Remaining terpenoids")) %>%
+  group_by(Chemotype, Compounds_barplot) %>%
+  summarize(Percentage_barplot = sum(Percentage))
+
+barplot.stacked.composition.data$Chemotype <- factor( # set the factor levels, sorted from Keto to Myrox
+  barplot.stacked.composition.data$Chemotype,levels=c("Keto",
+                                                       "BThu",
+                                                       "ABThu",
+                                                       "Aacet",
+                                                       "Myrox"))
+
+barplot.stacked.composition.data$Compounds_barplot <- factor(barplot.stacked.composition.data$Compounds_barplot,
+                                                    levels=c("artemisia_ketone", # define the order in which the compounds are plotted
+                                                             "artemisyl_acetate_b",
+                                                             "artemisia_alcohol",
+                                                             "thujone_a",
+                                                             "thujone_b",
+                                                             "myroxide_Z",
+                                                             "santolina_triene",
+                                                             "cadinene_g",
+                                                             "sabinene",
+                                                             "yomogi_alcohol",
+                                                             "unknown_sesquiterpenoid_9",
+                                                             "neothujol",
+                                                             "cineole_1_8",
+                                                             "cymene_p",
+                                                             "Remaining terpenoids"))
+
+```
+
+## Barplot showing terpenoid composition
+```{r}
+
+barplot.stacked.composition <- ggplot(data = barplot.stacked.composition.data,
+                                      fill = "black",
+                                      aes(x = Chemotype, y = Percentage_barplot, fill = Compounds_barplot)) +
+  geom_bar(stat = "identity", size = 0.2, color = "black") +
+  scale_fill_manual(values = fill_values,
+                    labels = expression("Artemisia ketone",
+                               "Artemisyl acetate",
+                               "Artemisia alcohol",
+                               paste("\u03b1","-Thujone"),
+                               paste("\u03b2","-Thujone"),
+                               paste("(",italic("Z"),")","-Myroxide"),
+                               "Santolina triene",
+                               paste("\u03b3","-Cadinene"),
+                               "Sabinene",
+                               "Yomogi alcohol",
+                               "Unkn. sesquiterpenoid 9",
+                               "Neothujol",
+                               paste(italic("1,8"),"-Cineole"),
+                               paste(italic("p"),"-Cymene"),
+                               "Other terpenoids")) +
+  scale_y_continuous(name = "Proportion of terpenoids [%]",
+                     limits = c(0,100),
+                     breaks = seq(0,100,20)) +
+  theme_classic(base_size=16) +
+  labs(x ="\nChemotype",
+       fill = "Terpenoid") +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor = element_blank(),
+   plot.margin = margin(t = 1, unit = "cm"),
+   legend.text = element_text(size = 10),
+   legend.title = element_markdown(size = 15),
+   legend.text.align = 0) +
+  guides(fill = guide_legend(title = "Terpenoid", override.aes = list(size = .5)))
+  
+
+show(barplot.stacked.composition)
+
+ggsave("Plots/Figure_3.pdf", 
+       barplot.stacked.composition,
+       device = cairo_pdf, # cairo_pdf supports greek letters
+       height = 7,
+       width = 7,
+       dpi=600)
+
+ggsave("Plots/Figure_3.jpg", 
+       barplot.stacked.composition,
+       height = 7,
+       width = 7,
+       dpi=600)
+
+```
+
+
+# GLMMs *U. tanaceti*
+## Plant level
+
+### Total count
+
+#### GLMM
+```{r}
+glmm.ut.total.plant <- glmmTMB(U_tanaceti_total ~ Shannon_Diversity_plant_perc + 
+                                 highest_shoot_cm + 
+                                 number_shoots + 
+                                 no_leaves +
+                                 (1|Block) + 
+                                 (1|Plot_unique) + 
+                                 (1|Motherplant),
+                                data = glmm.data.plantlevel, family="nbinom2")
+```
+
+#### Diagnostics
+```{r}
+resid.ut.total <- simulateResiduals(glmm.ut.total.plant)
+plot(resid.ut.total)
+```
+
+#### Significances
+
+**receive the variance of each factor of the model**
+```{r}
+var.ut.total.plant <- get_variance(glmm.ut.total.plant)
+print(var.ut.total.plant)
+```
+**Chi-square test**
+```{r}
+anova.ut.total.plant <- Anova(glmm.ut.total.plant, test="Chisq", type = "III")
+print(anova.ut.total.plant)
+
+info.ut.total.plant <- extract_glmm_info(glmm.ut.total.plant,
+                                         anova.ut.total.plant,
+                                         var.ut.total.plant)
+```
+
+**check the effect of significant effects**
+
+```{r}
+summary(glmm.ut.total.plant)
+```
+
+
+### alate presence
+
+#### GLMM
+```{r}
+glmm.ut.alate.presence <- glmmTMB(U_tanaceti_alate_presence ~ Shannon_Diversity_plant_perc +
+                                              highest_shoot_cm  + 
+                                              number_shoots + 
+                                              no_leaves +
+                                              (1|Block) +
+                                              (1|Plot_unique) +
+                                              (1|Motherplant),
+                                        data = glmm.data.plantlevel, family="binomial")
+```
+
+#### Diagnostics
+```{r}
+resid.ut.alate.pres <- simulateResiduals(glmm.ut.alate.presence)
+plot(resid.ut.alate.pres)
+```
+
+
+#### Significances
+
+**receive the variance of each factor of the model**
+
+```{r}
+var.ut.alate.presence.plant <- get_variance(glmm.ut.alate.presence)
+print(var.ut.alate.presence.plant)
+```
+
+**Chi-square Test**
+
+```{r}
+ut.alate.presence.plant.anova <- Anova(glmm.ut.alate.presence,test="Chisq", type = "III")
+print(ut.alate.presence.plant.anova, digits = 3)
+
+info.ut.alate.presence.plant <- extract_glmm_info(glmm.ut.alate.presence,
+                                         ut.alate.presence.plant.anova,
+                                         var.ut.alate.presence.plant)
+```
+**check the effects of significant effects**
+```{r}
+summary(glmm.ut.alate.presence)
+```
+
+
+## Plot level *U. tanaceti*
+### Total count
+#### GLMM
+```{r}
+glmm.ut.total.plot.shannon.perc <- glmmTMB(U_tanaceti_total~Shannon_Diversity_plot_perc + 
+                                             highest_shoot_cm + 
+                                             number_shoots + 
+                                             no_leaves + 
+                                             (1|Block), 
+                                           data=glmm.data.plotlevel, family="nbinom2")
+```
+
+#### Diagnostics
+```{r}
+resid.ut.total.plot.shannon.perc <- simulateResiduals(glmm.ut.total.plot.shannon.perc)
+plot(resid.ut.total.plot.shannon.perc)
+
+```
+
+#### Significances
+
+**receive the variance of each factor in the model**
+
+```{r}
+var.ut.total.plot.shannon.perc <- get_variance(glmm.ut.total.plot.shannon.perc)
+print(var.ut.total.plot.shannon.perc)
+```
+
+
+**Chi-square test**
+```{r}
+anova.ut.total.plot.shannon.perc <- Anova(glmm.ut.total.plot.shannon.perc, test="Chisq", type = "III")
+
+print(anova.ut.total.plot.shannon.perc, digits = 3)
+
+info.ut.total.plot.shannon.perc <- extract_glmm_info(glmm.ut.total.plot.shannon.perc,
+                                         anova.ut.total.plot.shannon.perc,
+                                         var.ut.total.plot.shannon.perc)
+```
+
+```{r}
+summary(glmm.ut.total.plot.shannon.perc)
+```
+
+
+
+**Model prediction**
+```{r}
+# calculate predictions to plot into the descriptive plots later on
+prediction.ut.total.plot.shannon.perc <- ggpredict(glmm.ut.total.plot.shannon.perc,
+                                                   "Shannon_Diversity_plot_perc") 
+```
+
+### alate presence
+#### GLMM
+```{r}
+glmm.ut.alate.pres.plot.shannon.perc <- glmmTMB(U_tanaceti_alate_presence~Shannon_Diversity_plot_perc +
+                                                  highest_shoot_cm +
+                                                  number_shoots +
+                                                  no_leaves +
+                                                  (1|Block),
+                                                data=glmm.data.plotlevel, family="binomial")
+```
+
+#### Diagnostics
+```{r}
+resid.ut.alate.pres.plot.shannon.perc <- simulateResiduals(glmm.ut.alate.pres.plot.shannon.perc)
+plot(resid.ut.alate.pres.plot.shannon.perc)
+
+```
+
+#### Significances
+
+**Get the variance explained by each factor in the model**
+
+```{r}
+var.ut.alate.pres.plot.shannon.perc <- get_variance(glmm.ut.alate.pres.plot.shannon.perc)
+print(var.ut.alate.pres.plot.shannon.perc)
+```
+
+**Chi-square test**
+
+```{r}
+anova.ut.alate.pres.plot.shannon.perc <- Anova(glmm.ut.alate.pres.plot.shannon.perc, test="Chisq", type = "III")
+print(anova.ut.alate.pres.plot.shannon.perc, digits = 3)
+
+
+info.ut.alate.pres.plot.shannon.perc <- extract_glmm_info(glmm.ut.alate.pres.plot.shannon.perc,
+                                         anova.ut.alate.pres.plot.shannon.perc,
+                                         var.ut.alate.pres.plot.shannon.perc)
+```
+
+# GLMMs *M. tanacetaria*
+## Plant level
+### Total count
+#### GLMM
+```{r}
+glmm.mt.total.plant <- glmmTMB(M_tanacetaria_total ~ Shannon_Diversity_plant_perc +
+                                 highest_shoot_cm +
+                                 no_shoots_with_flowerbuds +
+                                 number_shoots +
+                                 no_leaves + 
+                                 (1|Block) + 
+                                 (1|Plot_unique) + 
+                                 (1|Motherplant),
+                                data = glmm.data.plantlevel, family="nbinom1")
+```
+
+#### Diagnostics
+```{r}
+resid.mt.total.plant <- simulateResiduals(glmm.mt.total.plant)
+plot(resid.mt.total.plant)
+```
+
+
+#### Significances
+
+**Get the variance explained by each factor in the model**
+```{r}
+var.mt.total.plant <- get_variance(glmm.mt.total.plant)
+print(var.mt.total.plant)
+```
+
+**Chi-square test**
+```{r}
+anova.mt.total.plant <- Anova(glmm.mt.total.plant, test = "Chisq", type="III")
+print(anova.mt.total.plant, digits = 3)
+
+info.mt.total.plant <- extract_glmm_info(glmm.mt.total.plant,
+                                         anova.mt.total.plant,
+                                         var.mt.total.plant)
+```
+**Check effect of significant effects**
+```{r}
+summary(glmm.mt.total.plant)
+```
+
+
+**Extract model prediction for plot later on**
+```{r}
+prediction.mt.total.plant <- ggpredict(glmm.mt.total.plant,
+                                       "Shannon_Diversity_plant_perc")
+```
+
+
+### alate presence
+
+#### GLMM
+```{r}
+glmm.mt.alate.presence.plant <- glmmTMB(M_tanacetaria_alate_presence ~ Shannon_Diversity_plant_perc +
+                                          highest_shoot_cm +
+                                          no_shoots_with_flowerbuds +
+                                          number_shoots +
+                                          no_leaves +
+                                          (1|Block) +
+                                          (1|Plot_unique) +
+                                          (1|Motherplant),
+                                        data = glmm.data.plantlevel, family="binomial")
+```
+
+#### Diagnostics
+```{r}
+resid.mt.alate.pres.plant <- simulateResiduals(glmm.mt.alate.presence.plant)
+plot(resid.mt.alate.pres.plant)
+```
+
+
+#### Significances
+
+**Get variance explained by each factor in the model**
+```{r}
+var.mt.alate.pres.plant <- get_variance(glmm.mt.alate.presence.plant)
+print(var.mt.alate.pres.plant)
+```
+
+
+**Chi-square Test**
+```{r}
+anova.mt.alate.pres.plant <- Anova(glmm.mt.alate.presence.plant,Test="Chisq", type="III")
+print(anova.mt.alate.pres.plant, digits = 3)
+
+info.mt.alate.pres.plant <- extract_glmm_info(glmm.mt.alate.presence.plant,
+                                              anova.mt.alate.pres.plant,
+                                              var.mt.alate.pres.plant)
+```
+
+## Plot level
+
+### total count
+
+#### GLMM
+```{r}
+glmm.mt.total.plot.shannon.perc <- glmmTMB(M_tanacetaria_total~Shannon_Diversity_plot_perc +
+                                           highest_shoot_cm  +
+                                           no_shoots_with_flowerbuds +
+                                           number_shoots +
+                                           no_leaves +
+                                           (1|Block), data=glmm.data.plotlevel, family="nbinom1")
+```
+
+#### Diagnostics
+```{r}
+resid.mt.total.plot.shannon.perc <- simulateResiduals(glmm.mt.total.plot.shannon.perc)
+plot(resid.mt.total.plot.shannon.perc)
+
+```
+
+#### Significances
+
+**Get the variance explained by each factor in the model**
+
+```{r}
+var.mt.total.plot.shannon.perc <- get_variance(glmm.mt.total.plot.shannon.perc)
+print(var.mt.total.plot.shannon.perc)
+```
+
+**Chi-square test**
+
+```{r}
+anova.mt.total.plot.shannon.perc <- Anova(glmm.mt.total.plot.shannon.perc, test="Chisq", type = "III")
+print(anova.mt.total.plot.shannon.perc, digits = 3)
+
+info.mt.total.plot.shannon.perc <- extract_glmm_info(glmm.mt.total.plot.shannon.perc,
+                                                     anova.mt.total.plot.shannon.perc,
+                                                     var.mt.total.plot.shannon.perc)
+```
+
+### alate presence
+#### GLMM
+```{r}
+glmm.mt.alate.pres.plot.shannon.perc <- glmmTMB(M_tanacetaria_alate_presence~Shannon_Diversity_plot_perc +
+                                                highest_shoot_cm +
+                                                no_shoots_with_flowerbuds +
+                                                number_shoots +
+                                                no_leaves +
+                                                (1|Block), data=glmm.data.plotlevel, family="binomial")
+```
+
+#### Diagnostics
+
+```{r}
+resid.mt.alate.pres.plot.shannon.perc <- simulateResiduals(glmm.mt.alate.pres.plot.shannon.perc)
+plot(resid.mt.alate.pres.plot.shannon.perc)
+
+```
+
+#### Significances
+
+**Get the variance explained by each factor in the model**
+
+```{r}
+var.mt.alate.pres.plot.shannon.perc <- get_variance(glmm.mt.alate.pres.plot.shannon.perc)
+print(var.mt.alate.pres.plot.shannon.perc)
+```
+
+**Chi-square Test**
+
+```{r}
+anova.mt.alate.pres.plot.shannon.perc <- Anova(glmm.mt.alate.pres.plot.shannon.perc, test="Chisq", type = "III")
+print(anova.mt.alate.pres.plot.shannon.perc, digits = 3)
+
+info.mt.alate.pres.plot.shannon.perc <- extract_glmm_info(glmm.mt.alate.pres.plot.shannon.perc,
+                                                          anova.mt.alate.pres.plot.shannon.perc,
+                                                          var.mt.alate.pres.plot.shannon.perc)
+```
+
+# GLMMs *M. fuscoviride*
+## Plant level
+### total count
+#### GLMM
+```{r}
+glmm.mf.total.plant <- glmmTMB(M_fuscoviride_total ~ Shannon_Diversity_plant_perc +
+                               highest_shoot_cm +
+                               no_shoots_with_flowerbuds +
+                               number_shoots +
+                               no_leaves +
+                               Antpresence +
+                               (1|Block) +
+                               (1|Plot_unique),
+                                data = glmm.data.plantlevel, family="nbinom1")
+```
+
+#### Diagnostics
+```{r}
+resid.mf.total.plant <- simulateResiduals(glmm.mf.total.plant)
+plot(resid.mf.total.plant)
+```
+
+#### Significances
+
+**Get the variance explained by each factor in the model**
+
+```{r}
+var.mf.total.plant <- get_variance(glmm.mf.total.plant)
+print(var.mf.total.plant)
+```
+
+**Chi-square Test**
+
+```{r}
+anova.mf.total.plant <- Anova(glmm.mf.total.plant, test = "Chisq", type="III")
+print(anova.mf.total.plant, digits = 3)
+
+info.mf.total.plant <- extract_glmm_info(glmm.mf.total.plant,
+                                         anova.mf.total.plant,
+                                         var.mf.total.plant) 
+```
+**Check the direction of significant effects**
+
+```{r}
+summary(glmm.mf.total.plant)
+
+cat("\n\n\n")
+cat("emmeans prediction for binary effect (Antpresence):")
+cat("\n")
+print(emmeans(glmm.mf.total.plant, ~ Antpresence, type = "response"))
+```
+
+
+### alate presence
+#### GLMM
+```{r}
+glmm.mf.alate.presence.plant <- glmmTMB(M_fuscoviride_alate_presence ~ Shannon_Diversity_plant_perc +
+                                          highest_shoot_cm +
+                                          no_shoots_with_flowerbuds +
+                                          number_shoots +
+                                          no_leaves +
+                                          Antpresence +
+                                          (1|Block) +
+                                          (1|Plot_unique) +
+                                          (1|Motherplant),
+                                        data = glmm.data.plantlevel, family="binomial")
+```
+
+#### Diagnostics
+```{r}
+resid.mf.alate.pres.plant <- simulateResiduals(glmm.mf.alate.presence.plant)
+plot(resid.mf.alate.pres.plant)
+```
+
+#### Significances
+
+**Get variance explained by each random effect**
+
+```{r}
+var.mf.alate.pres.plant <- get_variance(glmm.mf.alate.presence.plant)
+print(var.mf.alate.pres.plant)
+```
+
+
+**Chi-square test**
+```{r}
+anova.mf.alate.pres.plant <- Anova(glmm.mf.alate.presence.plant, Test="Chisq", type="III")
+print(anova.mf.alate.pres.plant, digits = 3)
+
+info.mf.alate.pres.plant <- extract_glmm_info(glmm.mf.alate.presence.plant,
+                                              anova.mf.alate.pres.plant,
+                                              var.mf.alate.pres.plant)
+```
+**Check effect of significant factors**
+
+```{r}
+print(emmeans(glmm.mf.alate.presence.plant, ~ Antpresence, type = "response"))
+```
+
+## Plot level
+### total count
+#### GLMM
+```{r}
+glmm.mf.total.plot.shannon.perc <- glmmTMB(M_fuscoviride_total~Shannon_Diversity_plot_perc +
+                                            highest_shoot_cm +
+                                            no_shoots_with_flowerbuds +
+                                            number_shoots +
+                                            no_leaves +
+                                            Antpresence +
+                                            (1|Block),
+                                           data=glmm.data.plotlevel, family="nbinom2")
+```
+
+#### Diagnostics
+```{r}
+resid.mf.total.plot.shannon.perc <- simulateResiduals(glmm.mf.total.plot.shannon.perc)
+plot(resid.mf.total.plot.shannon.perc)
+
+```
+
+#### Significances
+
+**Get the variance explained by each random effect**
+
+```{r}
+var.mf.total.plot.shannon.perc <- get_variance(glmm.mf.total.plot.shannon.perc)
+print(var.mf.total.plot.shannon.perc)
+```
+
+**Chi-square test**
+
+```{r}
+anova.mf.total.plot.shannon.perc <- Anova(glmm.mf.total.plot.shannon.perc, test="Chisq", type = "III")
+
+print(anova.mf.total.plot.shannon.perc, digits = 3)
+
+info.mf.total.plot.shannon.perc <- extract_glmm_info(glmm.mf.total.plot.shannon.perc,
+                                                     anova.mf.total.plot.shannon.perc,
+                                                     var.mf.total.plot.shannon.perc)
+```
+
+**Check the effects of significant effects**
+
+```{r}
+summary(glmm.mf.total.plot.shannon.perc)
+
+cat("\n\n\n")
+cat("emmeans prediction for binary effect (Antpresence):")
+cat("\n")
+print(emmeans(glmm.mf.total.plot.shannon.perc, ~ Antpresence, type = "response"))
+```
+
+
+### alate presence
+
+```{r}
+glmm.mf.alate.pres.plot.shannon.perc <- glmmTMB(M_fuscoviride_alate_presence~Shannon_Diversity_plot_perc +
+                                                highest_shoot_cm +
+                                                no_shoots_with_flowerbuds +
+                                                number_shoots +
+                                                no_leaves +
+                                                Antpresence +
+                                                (1|Block), data=glmm.data.plotlevel, family="binomial")
+```
+
+#### Diagnostics
+
+```{r}
+resid.mf.alate.pres.plot.shannon.perc <- simulateResiduals(glmm.mf.alate.pres.plot.shannon.perc)
+plot(resid.mf.alate.pres.plot.shannon.perc)
+
+```
+
+
+#### Significances
+
+**Get the variance explained by each factor**
+
+```{r}
+var.mf.alate.pres.plot.shannon.perc <- get_variance(glmm.mf.alate.pres.plot.shannon.perc)
+
+print(var.mf.alate.pres.plot.shannon.perc)
+```
+
+
+**Chi-square Test**
+```{r}
+anova.mf.alate.pres.plot.shannon.perc <- Anova(glmm.mf.alate.pres.plot.shannon.perc, test="Chisq", type = "III")
+print(anova.mf.alate.pres.plot.shannon.perc, digits = 3)
+
+
+info.mf.alate.pres.plot.shannon.perc <- extract_glmm_info(glmm.mf.alate.pres.plot.shannon.perc,
+                                                          anova.mf.alate.pres.plot.shannon.perc,
+                                                          var.mf.alate.pres.plot.shannon.perc)
+```
+
+## Combine GLMM information in dataframe
+
+```{r}
+
+# total presence of U. tanaceti and M. tanacetaria on plotlevel can't be
+# analysed since they were present on all plots
+info.glmms <- rbind(
+                    info.mf.total.plant,
+                    info.mf.alate.pres.plant,
+                    info.mf.total.plot.shannon.perc,
+                    info.mf.alate.pres.plot.shannon.perc,
+                    info.ut.total.plant,
+                    info.ut.alate.presence.plant,
+                    info.ut.total.plot.shannon.perc,
+                    info.ut.alate.pres.plot.shannon.perc,
+                    info.mt.total.plant,
+                    info.mt.alate.pres.plant,
+                    info.mt.total.plot.shannon.perc,
+                    info.mt.alate.pres.plot.shannon.perc
+                    ) %>%
+  select(c(".","Parameters", "Df", "Chisq", "Pr(>Chisq)", "random.variance.metrics", "V2")) %>%
+  rename("Random_effect_var_explained_percent" = "V2")
+
+write.csv(info.glmms, "Results/GLMMs_Phenotypingweek_Summary.csv", row.names=F)
+```
+
+# Plots SIGNIFICANT Parameters GLMMs
+## *U. tanaceti* significanceplots
+
+```{r fig.width=8.5, fig.height=7}
+# add a column with "model prediction" which can be set as aesthetic
+# so it appears in the legend of the plot
+
+prediction.ut.total.plot.shannon.perc$aesthetic_naming <- "model prediction"
+  
+scatter.plotlevel.utanaceti.total.shannon <- ggplot(data=glmm.data.plotlevel) +
+  geom_point(aes(x=Shannon_Diversity_plot_perc, y=U_tanaceti_total, colour=Chemotype)) +
+  geom_line(aes(x=x, y=predicted, linetype=aesthetic_naming),
+            data = prediction.ut.total.plot.shannon.perc,
+            size=1.3) +
+  scale_linetype_manual(values = "solid", labels = "model prediction") +
+  scale_color_manual(values = colours_chemotype_heterogenousinc, labels = labels_chemotype_heterogenousinc) +
+  scale_x_continuous(breaks=c(0,1,2,3), limits = c(-0, 3)) +
+  ylab("Abundance\n") +
+  xlab("\nShannon diversity plot level") +
+  labs(linetype="") +
+  coord_cartesian(clip = "off") +
+  theme_classic(base_size = 20) +
+  theme(plot.background = element_rect(color="white"),
+        panel.grid.major.y = element_line(color = "black", size = 0.1, linetype = "dotted"),
+        legend.spacing.y = unit(-0.3, "cm")) +
+  guides(color = guide_legend(order = 1, title.vjust = 4),
+         linetype = guide_legend(order=2))
+
+show(scatter.plotlevel.utanaceti.total.shannon)
+
+#ggsave("Plots/Significanceplot_Scatterplot_ShannonDiv_plotlevel_Utanacetitotal.png", dpi=300,
+ #      height = 6.5, width = 9)
+```
+
+## *M.tanacetaria* significanceplots
+
+```{r}
+prediction.mt.total.plant$aesthetic <- "model prediction"
+
+scatter.plantlevel.mtanacetaria.total.shannon <- ggplot(data=glmm.data.plantlevel) +
+  geom_point(aes(x=Shannon_Diversity_plant_perc, y=M_tanacetaria_total, colour=Chemotype)) +
+  geom_line(aes(x=x, y=predicted, linetype=aesthetic), data=prediction.mt.total.plant, size=1.3) +
+scale_color_manual(values = colours_chemotype, labels = labels_chemotype) +
+  ylab("Abundance\n") +
+  xlab("\nShannon diversity ind. level") +
+  scale_x_continuous(breaks=c(0,1,2,3), limits = c(-0, 3)) +
+  theme_classic(base_size = 20) +
+  theme(panel.grid.major.y = element_line(color = "black", size = 0.1, linetype = "dotted"),
+        plot.background = element_rect(color="white"),
+        legend.spacing.y = unit(-0.3, "cm")) +
+  coord_cartesian(clip = "off") +
+  labs(linetype = "") +
+  guides(color = guide_legend(title.vjust = 4))
+  
+  
+
+show(scatter.plantlevel.mtanacetaria.total.shannon)
+#ggsave("Plots/Significanceplot_Scatterplot_ShannonDiv_plantlevel_Mtanacetaria_singleplot.png",
+ #      height = 6.5, width = 9 ,dpi=300)
+```
+
+## Merging significant Chemodiv plots
+
+```{r fig.height = 10, fig.width=8}
+
+scatter.plantlevel.mtanacetaria.total.shannon.merge <- scatter.plantlevel.mtanacetaria.total.shannon +
+  coord_cartesian(clip = "off") + 
+  annotate(geom = "text", x = 0, y = 150, label = "A",
+            hjust = 6, vjust = -2, size = 4, fontface = "bold") +
+  theme(axis.text.x = element_blank(),
+        legend.position = "none",
+        text = element_text(size = 11))
+
+scatter.plotlevel.utanaceti.total.shannon.merge <- scatter.plotlevel.utanaceti.total.shannon +
+  coord_cartesian(clip = "off") +
+  annotate(geom = "text", 
+           x = 0, 
+           y = 8000, 
+           label = "B",
+           hjust = 6, 
+           vjust = -2, 
+           size = 4, 
+           fontface = "bold") +
+  theme(text = element_text(size = 11),
+        legend.position = c(0.6, 0.25),
+        legend.spacing.y = unit(2, "pt"),
+        legend.text = element_text(size = 9)) +
+  guides(color = guide_legend(nrow=2, 
+                              byrow=TRUE, 
+                              keyheight = .7,
+                              override.aes = list(size = 2),
+                              title.vjust = 3),
+         linetype = guide_legend(nrow = 1, 
+                                 keyheight = 0))
+
+legend.cowplot <- get_legend(scatter.plotlevel.utanaceti.total.shannon.merge)
+Significance.UT.MT.ShannonDiv <- plot_grid(legend.cowplot,
+                          scatter.plantlevel.mtanacetaria.total.shannon.merge,
+                          scatter.plotlevel.utanaceti.total.shannon.merge + 
+                            theme(legend.position = "none"),
+                          ncol = 1,
+                          nrow = 3)
+
+show(Significance.UT.MT.ShannonDiv)
+
+ggsave("Plots/Figure_4.pdf", Significance.UT.MT.ShannonDiv,
+       dpi=600,
+       device = "pdf",
+       width = 8.5,
+       height = 20,
+       units = "cm")
+
+ggsave("Plots/Figure_4.jpg", Significance.UT.MT.ShannonDiv, 
+       dpi=600,
+       width = 8.5,
+       height = 20,
+       units = "cm")
+```
