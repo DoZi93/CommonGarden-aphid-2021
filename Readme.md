@@ -1,0 +1,1 @@
+# (Raw)-Data and scripts containing statistical analyses for the publication "Intraspecific Chemodiversity Provides Plant Individual- and Neighbourhood-Mediated Associational Resistance towards Aphids"
