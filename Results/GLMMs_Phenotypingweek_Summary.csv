@@ -1,0 +1,120 @@
+".","Parameters","Df","Chisq","Pr(>Chisq)","random.variance.metrics","Random_effect_var_explained_percent"
+"M_fuscoviride_total",NA,NA,NA,NA,NA,NA
+"Shannon_Diversity_plant_perc + highest_shoot_cm + no_shoots_with_flowerbuds + number_shoots + no_leaves + Antpresence + (1 | Block) + (1 | Plot_unique)",NA,NA,NA,NA,NA,NA
+NA,"(Intercept)",1,5.11108303728304,0.0237734752105204,NA,NA
+NA,"Shannon_Diversity_plant_perc",1,0.996086468202012,0.318259324600928,NA,NA
+NA,"highest_shoot_cm",1,2.0774887878295,0.149485929634985,NA,NA
+NA,"no_shoots_with_flowerbuds",1,0.148710776335516,0.699770443441909,NA,NA
+NA,"number_shoots",1,0.00887591327033961,0.92494070058787,NA,NA
+NA,"no_leaves",1,4.74867675038919,0.0293208331413564,NA,NA
+NA,"Antpresence",1,52.487804138808,4.32928505138884e-13,NA,NA
+NA,NA,NA,NA,NA,"Block","6.65136344768872e-08"
+NA,NA,NA,NA,NA,"Plot_unique","21.2402757646457"
+"M_fuscoviride_alate_presence",NA,NA,NA,NA,NA,NA
+"Shannon_Diversity_plant_perc + highest_shoot_cm + no_shoots_with_flowerbuds + number_shoots + no_leaves + Antpresence + (1 | Block) + (1 | Plot_unique) + (1 | Motherplant)",NA,NA,NA,NA,NA,NA
+NA,"(Intercept)",1,2.1942270402252,0.138528684890389,NA,NA
+NA,"Shannon_Diversity_plant_perc",1,0.405199011351217,0.524416411499457,NA,NA
+NA,"highest_shoot_cm",1,0.328385350970186,0.566611402248922,NA,NA
+NA,"no_shoots_with_flowerbuds",1,0.0865309263602303,0.768634578483424,NA,NA
+NA,"number_shoots",1,0.309168713260965,0.578190744588517,NA,NA
+NA,"no_leaves",1,0.273293190109462,0.60113117876234,NA,NA
+NA,"Antpresence",1,5.30736418414673,0.0212354608453858,NA,NA
+NA,NA,NA,NA,NA,"Block","5.26964739670258"
+NA,NA,NA,NA,NA,"Plot_unique","13.5623858717282"
+NA,NA,NA,NA,NA,"Motherplant","0.000139270398756314"
+"M_fuscoviride_total",NA,NA,NA,NA,NA,NA
+"Shannon_Diversity_plot_perc + highest_shoot_cm + no_shoots_with_flowerbuds + number_shoots + no_leaves + Antpresence + (1 | Block)",NA,NA,NA,NA,NA,NA
+NA,"(Intercept)",1,1.53023454744443,0.216077246766464,NA,NA
+NA,"Shannon_Diversity_plot_perc",1,0.246014966532412,0.619895145973744,NA,NA
+NA,"highest_shoot_cm",1,0.248206108646327,0.618341053445992,NA,NA
+NA,"no_shoots_with_flowerbuds",1,1.94436822796413,0.163195022654754,NA,NA
+NA,"number_shoots",1,10.2887305262114,0.00133845141502462,NA,NA
+NA,"no_leaves",1,0.935625984886786,0.333405270873296,NA,NA
+NA,"Antpresence",1,14.5651997268175,0.000135392024311285,NA,NA
+NA,NA,NA,NA,NA,"Block","1.93627018027126e-09"
+"M_fuscoviride_alate_presence",NA,NA,NA,NA,NA,NA
+"Shannon_Diversity_plot_perc + highest_shoot_cm + no_shoots_with_flowerbuds + number_shoots + no_leaves + Antpresence + (1 | Block)",NA,NA,NA,NA,NA,NA
+NA,"(Intercept)",1,0.471480015818965,0.492307078903668,NA,NA
+NA,"Shannon_Diversity_plot_perc",1,0.000207660891476809,0.988502527281595,NA,NA
+NA,"highest_shoot_cm",1,4.71171186630838e-05,0.994523210953524,NA,NA
+NA,"no_shoots_with_flowerbuds",1,0.779773772851618,0.377210337014563,NA,NA
+NA,"number_shoots",1,0.56738096228325,0.451301533132937,NA,NA
+NA,"no_leaves",1,0.36352393321127,0.546555617070428,NA,NA
+NA,"Antpresence",1,0.347824125605948,0.555347431621873,NA,NA
+NA,NA,NA,NA,NA,"Block","24.3019282673793"
+"U_tanaceti_total",NA,NA,NA,NA,NA,NA
+"Shannon_Diversity_plant_perc + highest_shoot_cm + number_shoots + no_leaves + (1 | Block) + (1 | Plot_unique) + (1 | Motherplant)",NA,NA,NA,NA,NA,NA
+NA,"(Intercept)",1,3.39180787068838,0.0655210714334253,NA,NA
+NA,"Shannon_Diversity_plant_perc",1,0.609123633493879,0.435117968530319,NA,NA
+NA,"highest_shoot_cm",1,0.865781530871125,0.352125812657931,NA,NA
+NA,"number_shoots",1,0.029294324945573,0.86410122185777,NA,NA
+NA,"no_leaves",1,16.2363922056081,5.59097214210041e-05,NA,NA
+NA,NA,NA,NA,NA,"Block","2.72139489873861"
+NA,NA,NA,NA,NA,"Plot_unique","29.6482503310118"
+NA,NA,NA,NA,NA,"Motherplant","3.0369035226409e-07"
+"U_tanaceti_alate_presence",NA,NA,NA,NA,NA,NA
+"Shannon_Diversity_plant_perc + highest_shoot_cm + number_shoots + no_leaves + (1 | Block) + (1 | Plot_unique) + (1 | Motherplant)",NA,NA,NA,NA,NA,NA
+NA,"(Intercept)",1,7.4326837135854,0.00640497507576292,NA,NA
+NA,"Shannon_Diversity_plant_perc",1,0.688344561570467,0.406728028057818,NA,NA
+NA,"highest_shoot_cm",1,2.46182090534454,0.116643490871037,NA,NA
+NA,"number_shoots",1,3.98550078157372,0.0458934566026121,NA,NA
+NA,"no_leaves",1,7.28787107748008,0.00694216938231392,NA,NA
+NA,NA,NA,NA,NA,"Block","0.268023994340182"
+NA,NA,NA,NA,NA,"Plot_unique","5.182716088174"
+NA,NA,NA,NA,NA,"Motherplant","5.78128671941162e-06"
+"U_tanaceti_total",NA,NA,NA,NA,NA,NA
+"Shannon_Diversity_plot_perc + highest_shoot_cm + number_shoots + no_leaves + (1 | Block)",NA,NA,NA,NA,NA,NA
+NA,"(Intercept)",1,3.11151552690784,0.0777405921774159,NA,NA
+NA,"Shannon_Diversity_plot_perc",1,3.8886027203342,0.0486148538472848,NA,NA
+NA,"highest_shoot_cm",1,8.27739148672886,0.00401417560333361,NA,NA
+NA,"number_shoots",1,9.36081287154192e-06,0.997558840446646,NA,NA
+NA,"no_leaves",1,0.313455316898227,0.5755675645557,NA,NA
+NA,NA,NA,NA,NA,"Block","17.646259914015"
+"U_tanaceti_alate_presence",NA,NA,NA,NA,NA,NA
+"Shannon_Diversity_plot_perc + highest_shoot_cm + number_shoots + no_leaves + (1 | Block)",NA,NA,NA,NA,NA,NA
+NA,"(Intercept)",1,1.70577706371518,0.19153419287504,NA,NA
+NA,"Shannon_Diversity_plot_perc",1,2.86515034865089,0.0905172511842473,NA,NA
+NA,"highest_shoot_cm",1,0.281828296106917,0.595505383108501,NA,NA
+NA,"number_shoots",1,2.65714462898995,0.103085638727883,NA,NA
+NA,"no_leaves",1,2.98045339858722,0.0842756612296521,NA,NA
+NA,NA,NA,NA,NA,"Block","1.00393719497816e-07"
+"M_tanacetaria_total",NA,NA,NA,NA,NA,NA
+"Shannon_Diversity_plant_perc + highest_shoot_cm + no_shoots_with_flowerbuds + number_shoots + no_leaves + (1 | Block) + (1 | Plot_unique) + (1 | Motherplant)",NA,NA,NA,NA,NA,NA
+NA,"(Intercept)",1,1.87419594392247,0.170995285546777,NA,NA
+NA,"Shannon_Diversity_plant_perc",1,4.15140493044241,0.0415999943594891,NA,NA
+NA,"highest_shoot_cm",1,0.0687452855005476,0.793172478956245,NA,NA
+NA,"no_shoots_with_flowerbuds",1,0.111957965257735,0.737925937075564,NA,NA
+NA,"number_shoots",1,0.00134014275105828,0.970797596452993,NA,NA
+NA,"no_leaves",1,2.6189407882784,0.105594906100558,NA,NA
+NA,NA,NA,NA,NA,"Block","17.7621059720141"
+NA,NA,NA,NA,NA,"Plot_unique","14.0863471280014"
+NA,NA,NA,NA,NA,"Motherplant","1.13979390582"
+"M_tanacetaria_alate_presence",NA,NA,NA,NA,NA,NA
+"Shannon_Diversity_plant_perc + highest_shoot_cm + no_shoots_with_flowerbuds + number_shoots + no_leaves + (1 | Block) + (1 | Plot_unique) + (1 | Motherplant)",NA,NA,NA,NA,NA,NA
+NA,"(Intercept)",1,1.92371614800974,0.1654475726516,NA,NA
+NA,"Shannon_Diversity_plant_perc",1,0.00301593152475849,0.956204191975667,NA,NA
+NA,"highest_shoot_cm",1,1.45110154829256,0.228351281998573,NA,NA
+NA,"no_shoots_with_flowerbuds",1,0.00130978569971774,0.971130092888201,NA,NA
+NA,"number_shoots",1,1.87449741156612,0.170960873016747,NA,NA
+NA,"no_leaves",1,0.000149244127394825,0.990252844726553,NA,NA
+NA,NA,NA,NA,NA,"Block","8.04504251426812e-13"
+NA,NA,NA,NA,NA,"Plot_unique","6.99071336016442"
+NA,NA,NA,NA,NA,"Motherplant","4.75280636656807e-08"
+"M_tanacetaria_total",NA,NA,NA,NA,NA,NA
+"Shannon_Diversity_plot_perc + highest_shoot_cm + no_shoots_with_flowerbuds + number_shoots + no_leaves + (1 | Block)",NA,NA,NA,NA,NA,NA
+NA,"(Intercept)",1,0.0810873212611858,0.775829279002238,NA,NA
+NA,"Shannon_Diversity_plot_perc",1,0.148636376178499,0.699841906726061,NA,NA
+NA,"highest_shoot_cm",1,3.1693953779313,0.0750302174927647,NA,NA
+NA,"no_shoots_with_flowerbuds",1,3.93082187672124e-05,0.994997594438802,NA,NA
+NA,"number_shoots",1,0.00377467688264739,0.951010072054697,NA,NA
+NA,"no_leaves",1,0.445757673784969,0.504356482842257,NA,NA
+NA,NA,NA,NA,NA,"Block","21.5021874485545"
+"M_tanacetaria_alate_presence",NA,NA,NA,NA,NA,NA
+"Shannon_Diversity_plot_perc + highest_shoot_cm + no_shoots_with_flowerbuds + number_shoots + no_leaves + (1 | Block)",NA,NA,NA,NA,NA,NA
+NA,"(Intercept)",1,1.1396359527105,0.285729265676965,NA,NA
+NA,"Shannon_Diversity_plot_perc",1,0.0375717926438008,0.846305514102267,NA,NA
+NA,"highest_shoot_cm",1,0.0453982298603511,0.831273453003888,NA,NA
+NA,"no_shoots_with_flowerbuds",1,1.85478465851452,0.173227934156891,NA,NA
+NA,"number_shoots",1,0.534182125322181,0.464853894522963,NA,NA
+NA,"no_leaves",1,2.17139486602199,0.14059865417447,NA,NA
+NA,NA,NA,NA,NA,"Block","6.69498731687442"
